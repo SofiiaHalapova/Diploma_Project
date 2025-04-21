@@ -1,6 +1,7 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
 %}
 <form action="{{ url_for("views.create_new_project") }}" method="POST">
+    <br>
   <div align="center">
       <button type="submit" class="btn btn-primary">New Project</button>
   </div>
