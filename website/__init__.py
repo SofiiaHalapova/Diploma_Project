@@ -1,6 +1,6 @@
 from Ground_Detection_App.website.views import views
 from Ground_Detection_App.website.auth import auth
-from Ground_Detection_App.website.models import User, Note, db
+from Ground_Detection_App.website.models import User, db
 from flask import Flask
 from os import path
 from flask_login import LoginManager

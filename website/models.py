@@ -4,11 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-
-class Note(db.Model):
+class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(10000), nullable=False)
-    date = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+    project_name = db.Column(db.String(80), unique=True, nullable=False)
+    classification_method = db.Column(db.String(80), unique=True, nullable=False)
+    classification_classes = db.Column(db.String(10000), unique=True, nullable=False)
+    dataset = db.Column(db.String(255), unique=True, nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
@@ -17,4 +19,10 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
     first_name = db.Column(db.String(64), nullable=False)
-    notes = db.relationship('Note', backref='author', lazy=True)
+    projects = db.relationship('Project', backref='author', lazy=True)
+
+# class Note(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     data = db.Column(db.String(10000), nullable=False)
+#     date = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -1,31 +1,30 @@
-{% extends "base.html" %} {% block title %}Project{% endblock %} {% block content
-%}
+{% extends "base.html" %} {% block title %}Project{% endblock %} {% block content %}
 
-  <div align="center">
-      <br>
-      <h1>Start with your new detection project!</h1>
-      <br>
-  </div>
+    <div align="center">
+        <br>
+        <h1>Welcome to your current project!</h1>
+        <br>
+    </div>
     <ul class="list-group list-group-flush">
         <form action="{{ url_for("views.create_class_distribution_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark" >
+            <button type="submit" class="btn btn-outline-dark">
                 plot_class_distribution
             </button>
         </form>
         <br>
         <form action="{{ url_for("views.create_sample_spectra_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark" >
+            <button type="submit" class="btn btn-outline-dark">
                 plot_sample_spectra
             </button>
         </form>
         <br>
         <form action="{{ url_for("views.create_comprehensive_review_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark" >
+            <button type="submit" class="btn btn-outline-dark">
                 plot_comprehensive_review
             </button>
         </form>
         <br>
-        <button class="btn btn-outline-dark" type="button" >
+        <button class="btn btn-outline-dark" type="button">
             Generate prediction
         </button>
     </ul>

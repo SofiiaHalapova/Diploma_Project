@@ -12,7 +12,7 @@ import scipy.io as sio
 matplotlib.use('Agg')
 
 
-class GroundVisualizer:
+class MetricsCalculator:
     CLASS_NAMES = {
         0: 'Background',
         1: 'Asphalt',
