@@ -13,18 +13,18 @@ matplotlib.use('Agg')
 
 
 class MetricsCalculator:
-    CLASS_NAMES = {
-        0: 'Background',
-        1: 'Asphalt',
-        2: 'Meadows',
-        3: 'Gravel',
-        4: 'Trees',
-        5: 'Painted_metal_sheets',
-        6: 'Bare_soil',
-        7: 'Bitumen',
-        8: 'Self_Blocking_Bricks',
-        9: 'Shadows'
-    }
+    # class_names = {
+    #     0: 'Background',
+    #     1: 'Asphalt',
+    #     2: 'Meadows',
+    #     3: 'Gravel',
+    #     4: 'Trees',
+    #     5: 'Painted_metal_sheets',
+    #     6: 'Bare_soil',
+    #     7: 'Bitumen',
+    #     8: 'Self_Blocking_Bricks',
+    #     9: 'Shadows'
+    # }
 
     # CLASS_NAMES = {
     #     0: 'Alfalfa',
@@ -45,7 +45,14 @@ class MetricsCalculator:
     #     15: 'Stone-Steel-Towers'
     # }
 
-    def __init__(self):
+    def __init__(self, class_names):
+        class_names = class_names.split()
+        class_names_dict = {}
+        num = 0
+        for i in class_names:
+            class_names_dict.update({num: i})
+            num += 1
+        self.class_names = class_names_dict
         self.data = None  # hyperspectral image cube
         self.labels = None  # the ground truth classifications
         self.wavelength = None  # the wavelength values for each spectral band
@@ -138,7 +145,7 @@ class MetricsCalculator:
         plt.figure(figsize=(15, 5))
 
         bars = plt.bar(
-            [self.CLASS_NAMES.get(i, f'Невідомий матеріал ({i})') for i in unique],
+            [self.class_names.get(i, f'Невідомий матеріал ({i})') for i in unique],
             counts
         )
 
@@ -179,7 +186,7 @@ class MetricsCalculator:
             if np.any(mask):
                 # обчислення середнього спектру для всіх пікселів, що задовольняють умови, визначені маскою
                 mean_spectrum = np.mean(self.data[mask], axis=0)
-                plt.plot(self.wavelength, mean_spectrum, label=self.CLASS_NAMES[class_id])
+                plt.plot(self.wavelength, mean_spectrum, label=self.class_names[class_id])
 
         plt.title('Середні спектри обраних класів')
         plt.xlabel('Довжина хвилі спектру (nm)')

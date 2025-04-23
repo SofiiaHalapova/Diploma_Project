@@ -19,6 +19,7 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
 
     with app.app_context():
+        # db.drop_all()
         db.create_all()
 
     login_manager = LoginManager()
