@@ -83,11 +83,8 @@ class SpectrumAnalysis:
 
     def load_data(self, path):
 
-        # if path is None:
-        # path = kagglehub.dataset_download("syamkakarla/pavia-university-hsi")
-        # path = kagglehub.dataset_download("alamintokdershoukhin/indian-pines-dataset")
-        # path = kagglehub.dataset_download("abhijeetgo/indian-pines-hyperspectral-dataset")
-        print(path)
+        if "static\\uploads\\" not in path:
+            path = eval(path)
 
         if os.path.isdir(path):
             if any(f.endswith('.mat') for f in os.listdir(path)):
