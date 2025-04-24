@@ -1,10 +1,8 @@
 import glob
 import os
-import time
-import kagglehub
-import scipy
+import shutil
 
-from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
+import kagglehub
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +11,7 @@ import scipy.io as sio
 matplotlib.use('Agg')
 
 
-class MetricsCalculator:
+class SpectrumAnalysis:
 
     def __init__(self, class_names):
         class_names = class_names.split()
@@ -77,13 +75,19 @@ class MetricsCalculator:
         if self.data is None or self.labels is None:
             raise ValueError('No data loaded')
 
+    def unarchive_data(self, archive_format, path):
+        filename = os.path.join('Ground_Detection_App', 'website', 'static', 'uploads', path)
+        extract_dir = os.path.join('Ground_Detection_App', 'website', 'static', 'uploads')
 
-    def load_data(self, path=None):
+        shutil.unpack_archive(filename, extract_dir, archive_format)
 
-        if path is None:
-            path = kagglehub.dataset_download("syamkakarla/pavia-university-hsi")
-            #path = kagglehub.dataset_download("alamintokdershoukhin/indian-pines-dataset")
-            # path = kagglehub.dataset_download("abhijeetgo/indian-pines-hyperspectral-dataset")
+    def load_data(self, path):
+
+        # if path is None:
+        # path = kagglehub.dataset_download("syamkakarla/pavia-university-hsi")
+        # path = kagglehub.dataset_download("alamintokdershoukhin/indian-pines-dataset")
+        # path = kagglehub.dataset_download("abhijeetgo/indian-pines-hyperspectral-dataset")
+        print(path)
 
         if os.path.isdir(path):
             if any(f.endswith('.mat') for f in os.listdir(path)):

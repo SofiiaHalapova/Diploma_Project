@@ -1,12 +1,12 @@
 import os
 import re
-
+import shutil
 from flask import Blueprint, render_template, url_for, redirect
 from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
-from .ml_model.model_metrics import MetricsCalculator
+from .ml_model.model_metrics import SpectrumAnalysis
 from .models import Project, db
 
 views = Blueprint('views', __name__)
@@ -15,8 +15,8 @@ UPLOAD_DATASETS_FOLDER = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz'}
 
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(filename, extensions):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
 
 
 def get_classification_classes(raw_input: str) -> str:
@@ -30,7 +30,7 @@ def get_classification_classes(raw_input: str) -> str:
     return ' '.join(unique_words)
 
 
-def load_dataset_file(upload_method, dataset_file, dataset_link, error):
+def load_dataset_file(upload_method, dataset_file, dataset_link, error, project_name):
     kagglehub_pattern = re.compile(r'kagglehub\.dataset_download\("([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)"\)')
     dataset = None
 
@@ -40,13 +40,11 @@ def load_dataset_file(upload_method, dataset_file, dataset_link, error):
         else:
             flash("Invalid dataset link type. Download allowed from kagglehub", category='error')
             error = True
-    elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename):
+    elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename, ALLOWED_EXTENSIONS):
         filename = secure_filename(dataset_file.filename)
-        print(filename)
         file_path = os.path.join(UPLOAD_DATASETS_FOLDER, filename)
-        print(file_path)
         dataset_file.save(file_path)
-        dataset = filename
+        dataset = unarchive_dataset(file_path, project_name)
     else:
         flash("Invalid dataset file type. Allowed: zip, tar, gz.", category='error')
         error = True
@@ -98,10 +96,28 @@ def render_plot_page(plot_func, template):
     if redirect_response:
         return redirect_response
 
-    gv = MetricsCalculator(class_names=project.classification_classes)
-    gv.load_data()
+    gv = SpectrumAnalysis(class_names=project.classification_classes)
+    gv.load_data(project.dataset)
+
     image_path = plot_func(gv)
-    return render_template(template, image_path=url_for('static', filename=image_path), user=current_user, project=project)
+    return render_template(template, image_path=url_for('static', filename=image_path), user=current_user,
+                           project=project)
+
+
+def unarchive_dataset(file_path, project_name):
+    extract_dir = os.path.join(UPLOAD_DATASETS_FOLDER, f"{secure_filename(project_name)}")
+    os.makedirs(extract_dir, exist_ok=True)
+
+    if file_path.endswith(".zip"):
+        shutil.unpack_archive(file_path, extract_dir, "zip")
+    elif file_path.endswith(".tar"):
+        shutil.unpack_archive(file_path, extract_dir, "tar")
+    elif file_path.endswith(".gz"):
+        shutil.unpack_archive(file_path, extract_dir, "gztar")
+    else:
+        raise ValueError("Unsupported archive format")
+
+    return extract_dir
 
 
 # main page of the website
@@ -138,7 +154,7 @@ def new_project():
                                       classification_method, dataset_file, dataset_link)
 
         if not error:
-            dataset, error = load_dataset_file(upload_method, dataset_file, dataset_link, error)
+            dataset, error = load_dataset_file(upload_method, dataset_file, dataset_link, error, project_name)
 
         if not error:
             project = Project(
