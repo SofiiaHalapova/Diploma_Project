@@ -2,6 +2,7 @@ import glob
 import os
 import time
 import kagglehub
+import scipy
 
 from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
 import matplotlib
@@ -13,37 +14,6 @@ matplotlib.use('Agg')
 
 
 class MetricsCalculator:
-    # class_names = {
-    #     0: 'Background',
-    #     1: 'Asphalt',
-    #     2: 'Meadows',
-    #     3: 'Gravel',
-    #     4: 'Trees',
-    #     5: 'Painted_metal_sheets',
-    #     6: 'Bare_soil',
-    #     7: 'Bitumen',
-    #     8: 'Self_Blocking_Bricks',
-    #     9: 'Shadows'
-    # }
-
-    # CLASS_NAMES = {
-    #     0: 'Alfalfa',
-    #     1: 'Corn-notill',
-    #     2: 'Corn-mintill',
-    #     3: 'Corn',
-    #     4: 'Grass-pasture',
-    #     5: 'Grass-trees',
-    #     6: 'Grass-pasture - mowed',
-    #     7: 'Hay-windrowed',
-    #     8: 'Oats',
-    #     9: 'Soybean-notill',
-    #     10: 'Soybean-mintill',
-    #     11: 'Soybean-clean',
-    #     12: 'Wheat',
-    #     13: 'Woods',
-    #     14: 'Buildings-Grass-Trees-Drives',
-    #     15: 'Stone-Steel-Towers'
-    # }
 
     def __init__(self, class_names):
         class_names = class_names.split()
@@ -106,6 +76,7 @@ class MetricsCalculator:
 
         if self.data is None or self.labels is None:
             raise ValueError('No data loaded')
+
 
     def load_data(self, path=None):
 

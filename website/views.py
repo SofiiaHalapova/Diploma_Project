@@ -1,4 +1,5 @@
 import os
+import re
 
 from flask import Blueprint, render_template, url_for, redirect
 from flask import request, flash, session, json, jsonify
@@ -7,22 +8,15 @@ from werkzeug.utils import secure_filename
 
 from .ml_model.model_metrics import MetricsCalculator
 from .models import Project, db
-import re
 
 views = Blueprint('views', __name__)
 
-UPLOAD_DATASETS_FOLDER = 'static/uploads'
+UPLOAD_DATASETS_FOLDER = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz'}
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@views.route('/api/project_count')
-@login_required
-def count_projects():
-    count = Project.query.count()
-    return jsonify({'count': count})
 
 
 def get_classification_classes(raw_input: str) -> str:
@@ -36,6 +30,80 @@ def get_classification_classes(raw_input: str) -> str:
     return ' '.join(unique_words)
 
 
+def load_dataset_file(upload_method, dataset_file, dataset_link, error):
+    kagglehub_pattern = re.compile(r'kagglehub\.dataset_download\("([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)"\)')
+    dataset = None
+
+    if upload_method == "link" and dataset_link:
+        if kagglehub_pattern.match(dataset_link):
+            dataset = dataset_link
+        else:
+            flash("Invalid dataset link type. Download allowed from kagglehub", category='error')
+            error = True
+    elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename):
+        filename = secure_filename(dataset_file.filename)
+        print(filename)
+        file_path = os.path.join(UPLOAD_DATASETS_FOLDER, filename)
+        print(file_path)
+        dataset_file.save(file_path)
+        dataset = filename
+    else:
+        flash("Invalid dataset file type. Allowed: zip, tar, gz.", category='error')
+        error = True
+
+    return dataset, error
+
+
+def validate_upload_input(project_name, classification_classes,
+                          classification_method, dataset_file, dataset_link):
+    error = False
+
+    if not project_name:
+        flash("Project name field is required.", category='error')
+        error = True
+    elif Project.query.filter_by(project_name=project_name).first():
+        flash("Project with such name already exists!", category='error')
+        error = True
+    elif not classification_classes:
+        flash("Classification classes field is required.", category='error')
+        error = True
+    elif not classification_method:
+        flash("Classification method field is required.", category='error')
+        error = True
+    elif not dataset_file and not dataset_link:
+        flash("You must upload a dataset file or provide a link.", category='error')
+        error = True
+    elif dataset_file and dataset_link:
+        flash("Please provide either a dataset file or a link, not both.", category='error')
+        error = True
+    return error
+
+
+def get_current_project_or_redirect():
+    project_id = session.get('current_project_id')
+    if not project_id:
+        flash("No current project selected.", 'error')
+        return None, redirect(url_for("views.home"))
+
+    project = Project.query.get(project_id)
+    if not project:
+        flash("Project not found.", 'error')
+        return None, redirect(url_for("views.home"))
+
+    return project, None
+
+
+def render_plot_page(plot_func, template):
+    project, redirect_response = get_current_project_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    gv = MetricsCalculator(class_names=project.classification_classes)
+    gv.load_data()
+    image_path = plot_func(gv)
+    return render_template(template, image_path=url_for('static', filename=image_path), user=current_user, project=project)
+
+
 # main page of the website
 @views.route('/', methods=['GET', 'POST'])
 @login_required
@@ -43,57 +111,37 @@ def home():
     return render_template("home.html", user=current_user)
 
 
+@views.route('/api/project_count')
+@login_required
+def count_projects():
+    count = Project.query.count()
+    return jsonify({'count': count})
+
+
 @views.route('/new_project', methods=['GET', 'POST'])
 @login_required
 def new_project():
+    os.makedirs(UPLOAD_DATASETS_FOLDER, exist_ok=True)
+
     if request.method == "POST":
-        project_name = request.form.get('project_name')
-        classification_classes = get_classification_classes(request.form.get('classification_classes'))
-        classification_method = request.form.get('classification_method')
-        upload_method = request.form.get('upload_method')
-        dataset_link = request.form.get('dataset_link')
-        dataset_file = request.files.get('dataset_archive')
-        error = False
-
-        if not project_name:
-            flash("Project name field is required.", category='error')
-            error = True
-        elif Project.query.filter_by(project_name=project_name).first():
-            flash("Project with such name already exists!", category='error')
-            error = True
-        elif not classification_classes:
-            flash("Classification classes field is required.", category='error')
-            error = True
-        elif not classification_method:
-            flash("Classification method field is required.", category='error')
-            error = True
-        elif not dataset_file and not dataset_link:
-            flash("You must upload a dataset file or provide a link.", category='error')
-            error = True
-        elif dataset_file and dataset_link:
-            flash("Please provide either a dataset file or a link, not both.", category='error')
-            error = True
-
+        form = request.form
         dataset = None
-        kagglehub_pattern = re.compile(r'kagglehub\.dataset_download\("([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)"\)')
-        if not error:
-            if upload_method == "link" and dataset_link:
-                if kagglehub_pattern.match(dataset_link):
-                    dataset = dataset_link
-                else:
-                    flash("Invalid dataset link type. Download allowed from kagglehub", category='error')
-                    error = True
-            elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename):
-                filename = secure_filename(dataset_file.filename)
-                file_path = os.path.join(UPLOAD_DATASETS_FOLDER, filename)
-                dataset_file.save(file_path)
-                dataset = filename
-            else:
-                flash("Invalid dataset file type. Allowed: zip, tar, gz.", category='error')
-                error = True
+
+        project_name = form.get('project_name')
+        classification_classes = get_classification_classes(form.get('classification_classes'))
+        classification_method = form.get('classification_method')
+        upload_method = form.get('upload_method')
+        dataset_link = form.get('dataset_link')
+        dataset_file = request.files.get('dataset_archive')
+
+        error = validate_upload_input(project_name, classification_classes,
+                                      classification_method, dataset_file, dataset_link)
 
         if not error:
-            current_project = Project(
+            dataset, error = load_dataset_file(upload_method, dataset_file, dataset_link, error)
+
+        if not error:
+            project = Project(
                 project_name=project_name,
                 classification_method=classification_method,
                 classification_classes=classification_classes,
@@ -101,14 +149,14 @@ def new_project():
                 user_id=current_user.id
             )
 
-            db.session.add(current_project)
+            db.session.add(project)
             db.session.commit()
 
-            session['current_project_id'] = current_project.id
+            session['current_project_id'] = project.id
 
             flash("Project has been successfully created.", category='success')
 
-            return redirect(url_for("views.project_details", project_id=current_project.id))
+            return redirect(url_for("views.project_details", project_id=project.id))
 
     return render_template("home.html", user=current_user)
 
@@ -130,23 +178,7 @@ def create_class_distribution_plot():
 @views.route('/class_distribution_plot', methods=['GET'])
 @login_required
 def class_distribution_plot():
-    project_id = session.get('current_project_id')
-    if not project_id:
-        flash("No current project selected.", category='error')
-        return redirect(url_for("views.home"))
-
-    current_project = Project.query.get(project_id)
-    if not current_project:
-        flash("Project not found.", category='error')
-        return redirect(url_for("views.home"))
-
-    print(current_project.classification_classes)
-    gv = MetricsCalculator(class_names=current_project.classification_classes)
-    gv.load_data()
-    image_path = gv.plot_class_distribution()
-    print(image_path)
-    return render_template("class_distribution_plot.html", image_path=url_for('static', filename=image_path),
-                           user=current_user)
+    return render_plot_page(lambda gv: gv.plot_class_distribution(), "class_distribution_plot.html")
 
 
 @views.route('/create_sample_spectra_plot', methods=['POST'])
@@ -158,23 +190,7 @@ def create_sample_spectra_plot():
 @views.route('/sample_spectra_plot', methods=['GET'])
 @login_required
 def sample_spectra_plot():
-    project_id = session.get('current_project_id')
-    if not project_id:
-        flash("No current project selected.", category='error')
-        return redirect(url_for("views.home"))
-
-    current_project = Project.query.get(project_id)
-    if not current_project:
-        flash("Project not found.", category='error')
-        return redirect(url_for("views.home"))
-
-    print(current_project.classification_classes)
-    gv = MetricsCalculator(class_names=current_project.classification_classes)
-    gv.load_data()
-    image_path = gv.plot_sample_spectra()
-    print(image_path)
-    return render_template("sample_spectra_plot.html", image_path=url_for('static', filename=image_path),
-                           user=current_user)
+    return render_plot_page(lambda gv: gv.plot_sample_spectra(), "sample_spectra_plot.html")
 
 
 @views.route('/create_comprehensive_review_plot', methods=['POST'])
@@ -186,23 +202,7 @@ def create_comprehensive_review_plot():
 @views.route('/comprehensive_review_plot', methods=['GET'])
 @login_required
 def comprehensive_review_plot():
-    project_id = session.get('current_project_id')
-    if not project_id:
-        flash("No current project selected.", category='error')
-        return redirect(url_for("views.home"))
-
-    current_project = Project.query.get(project_id)
-    if not current_project:
-        flash("Project not found.", category='error')
-        return redirect(url_for("views.home"))
-
-    print(current_project.classification_classes)
-    gv = MetricsCalculator(class_names=current_project.classification_classes)
-    gv.load_data()
-    image_path = gv.plot_comprehensive_review()
-    print(image_path)
-    return render_template("comprehensive_review_plot.html", image_path=url_for('static', filename=image_path),
-                           user=current_user)
+    return render_plot_page(lambda gv: gv.plot_comprehensive_review(), "comprehensive_review_plot.html")
 
 
 @views.route('/delete-project', methods=['POST'])
