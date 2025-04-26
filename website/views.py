@@ -6,7 +6,7 @@ from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
-from .ml_model.model_metrics import SpectrumAnalysis
+from .ml_model.data_evaluation import DataEvaluation
 from .models import Project, db
 
 views = Blueprint('views', __name__)
@@ -96,7 +96,7 @@ def render_plot_page(plot_func, template):
     if redirect_response:
         return redirect_response
 
-    gv = SpectrumAnalysis(class_names=project.classification_classes)
+    gv = DataEvaluation(class_names=project.classification_classes)
     gv.load_data(project.dataset)
 
     image_path = plot_func(gv)
