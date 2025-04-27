@@ -6,6 +6,7 @@ from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
+from .ml_model.classes_prediction import GeneratePrediction
 from .ml_model.data_evaluation import DataEvaluation
 from .models import Project, db
 
@@ -91,15 +92,28 @@ def get_current_project_or_redirect():
     return project, None
 
 
+def generate_classes_dictionary(class_names) -> dict:
+    class_names = class_names.split()
+    class_names_dict = {}
+    num = 0
+    for i in class_names:
+        class_names_dict.update({num: i})
+        num += 1
+
+    return class_names_dict
+
+
 def render_plot_page(plot_func, template):
     project, redirect_response = get_current_project_or_redirect()
     if redirect_response:
         return redirect_response
 
-    gv = DataEvaluation(class_names=project.classification_classes)
-    gv.load_data(project.dataset)
+    class_names_dict = generate_classes_dictionary(project.classification_classes)
 
-    image_path = plot_func(gv)
+    de = DataEvaluation(class_names=class_names_dict)
+    de.load_data(project.dataset)
+
+    image_path = plot_func(de)
     return render_template(template, image_path=url_for('static', filename=image_path), user=current_user,
                            project=project)
 
@@ -194,7 +208,7 @@ def create_class_distribution_plot():
 @views.route('/class_distribution_plot', methods=['GET'])
 @login_required
 def class_distribution_plot():
-    return render_plot_page(lambda gv: gv.plot_class_distribution(), "class_distribution_plot.html")
+    return render_plot_page(lambda de: de.plot_class_distribution(), "class_distribution_plot.html")
 
 
 @views.route('/create_sample_spectra_plot', methods=['POST'])
@@ -206,7 +220,7 @@ def create_sample_spectra_plot():
 @views.route('/sample_spectra_plot', methods=['GET'])
 @login_required
 def sample_spectra_plot():
-    return render_plot_page(lambda gv: gv.plot_sample_spectra(), "sample_spectra_plot.html")
+    return render_plot_page(lambda de: de.plot_sample_spectra(), "sample_spectra_plot.html")
 
 
 @views.route('/create_comprehensive_review_plot', methods=['POST'])
@@ -218,7 +232,35 @@ def create_comprehensive_review_plot():
 @views.route('/comprehensive_review_plot', methods=['GET'])
 @login_required
 def comprehensive_review_plot():
-    return render_plot_page(lambda gv: gv.plot_comprehensive_review(), "comprehensive_review_plot.html")
+    return render_plot_page(lambda de: de.plot_comprehensive_review(), "comprehensive_review_plot.html")
+
+
+@views.route('/create_classes_prediction_plot', methods=['GET', 'POST'])
+@login_required
+def create_classes_prediction_plot():
+    print("create_classes_prediction_plot is called")
+    return redirect(url_for('views.classes_prediction_plot'))
+
+
+@views.route('/classes_prediction_plot', methods=['GET'])
+@login_required
+def classes_prediction_plot():
+    print("classes_prediction_plot is called")
+    project, redirect_response = get_current_project_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    class_names_dict = generate_classes_dictionary(project.classification_classes)
+
+    gp = GeneratePrediction(class_names=class_names_dict)
+    gp.load_data(project.dataset)
+
+    image_path = gp.compute_classification_results()
+    print("data is loading")
+
+    return render_template("class_prediction_plot.html",
+                           image_path=url_for('static', filename=image_path), user=current_user,
+                           project=project)
 
 
 @views.route('/delete-project', methods=['POST'])

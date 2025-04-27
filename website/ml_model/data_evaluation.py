@@ -15,13 +15,7 @@ matplotlib.use('Agg')
 class DataEvaluation:
 
     def __init__(self, class_names):
-        class_names = class_names.split()
-        class_names_dict = {}
-        num = 0
-        for i in class_names:
-            class_names_dict.update({num: i})
-            num += 1
-        self.class_names = class_names_dict
+        self.class_names = class_names
         self.data = None  # hyperspectral image cube
         self.labels = None  # the ground truth classifications
         self.wavelength = None  # the wavelength values for each spectral band

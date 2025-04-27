@@ -69,7 +69,8 @@ class LoadDataset:
         if self.data is None or self.labels is None:
             raise ValueError('No data loaded')
 
-    def unarchive_data(self, archive_format, path):
+    @staticmethod
+    def unarchive_data(archive_format, path):
         filename = os.path.join('Ground_Detection_App', 'website', 'static', 'uploads', path)
         extract_dir = os.path.join('Ground_Detection_App', 'website', 'static', 'uploads')
 
