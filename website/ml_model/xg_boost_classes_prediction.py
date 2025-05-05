@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import time
 
 from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
@@ -19,7 +18,7 @@ from Ground_Detection_App.website.ml_model.load_data import LoadDataset
 matplotlib.use('TkAgg')
 
 
-class GeneratePrediction:
+class GeneratePredictionXGBoost:
 
     def __init__(self, class_names):
         self.data = None
@@ -75,7 +74,7 @@ class GeneratePrediction:
         plt.axis('off')
 
         plt.tight_layout()
-        plt.show()
+        # plt.show()
 
     def plot_confusion_matrix(self, y_true, y_pred):
         mask = y_true > 0
@@ -143,11 +142,9 @@ class GeneratePrediction:
         static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
         os.makedirs(static_img_path, exist_ok=True)
 
-        full_img_path = os.path.join(static_img_path, 'classes_prediction.png')
+        full_img_path = os.path.join(static_img_path, 'classes_prediction_xg_boost.png')
         plt.savefig(full_img_path)
         plt.close()
-        return 'imgs/classes_prediction.png'
+        return 'imgs/classes_prediction_xg_boost.png'
 
         # self.plot_confusion_matrix(y.ravel(), y_pred_full)
-
-

@@ -1,33 +1,38 @@
 {% extends "base.html" %} {% block title %}Project{% endblock %} {% block content %}
 
-    <div align="center">
+    <div class="text-center">
         <br>
         <h1>Welcome to your current project!</h1>
         <br>
     </div>
     <ul class="list-group list-group-flush">
-        <form action="{{ url_for("views.create_class_distribution_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark">
-                plot_class_distribution
-            </button>
-        </form>
-        <br>
-        <form action="{{ url_for("views.create_sample_spectra_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark">
-                plot_sample_spectra
-            </button>
-        </form>
-        <br>
-        <form action="{{ url_for("views.create_comprehensive_review_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark">
-                plot_comprehensive_review
-            </button>
-        </form>
-        <br>
-        <form action="{{ url_for("views.create_classes_prediction_plot") }}" method="POST">
-            <button type="submit" class="btn btn-outline-dark">
-                Generate prediction
-            </button>
-        </form>
+        <li class="list-group-item">
+            <form action="{{ url_for("views.create_class_distribution_plot") }}" method="POST">
+                <button type="submit" class="btn btn-outline-dark w-100">
+                    plot_class_distribution
+                </button>
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form action="{{ url_for("views.create_sample_spectra_plot") }}" method="POST">
+                <button type="submit" class="btn btn-outline-dark w-100">
+                    plot_sample_spectra
+                </button>
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form action="{{ url_for("views.create_comprehensive_review_plot") }}" method="POST">
+                <button type="submit" class="btn btn-outline-dark w-100">
+                    plot_comprehensive_review
+                </button>
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form action="{{ url_for("views.create_classes_prediction_plot") }}" method="POST">
+                <button type="submit" class="btn btn-outline-dark w-100">
+                    Generate prediction
+                </button>
+            </form>
+        </li>
     </ul>
 {% endblock %}

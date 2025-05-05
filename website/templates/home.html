@@ -91,7 +91,7 @@
                         <!-- Link Input -->
                         <div class="form-group d-none" id="upload-link-group">
                             <label for="dataset-link">Paste Kagglehub link to dataset</label>
-                            <input type="text" class="form-control" id="dataset_link" name="dataset_link"
+                            <input type="text" class="form-control" id="dataset-link" name="dataset_link"
                                    placeholder="kagglehub.dataset_download('abhijeetgo/indian-pines-hyperspectral-dataset')">
                         </div>
                         <div class="form-group">
@@ -158,40 +158,29 @@
 
             })
 
-        {#function showUploadTags() {#}
-        {#    const uploadDataTags = document.getElementById('show-upload-tags');#}
-        {##}
-        {#    if (uploadDataTags.style.display === "none") {#}
-        {#        uploadDataTags.style.display = "block";#}
-        {#    } else {#}
-        {#        uploadDataTags.style.display = "none";#}
-        {#    }#}
-        {#}#}
 
-            let projectIdToDelete = null;
+        let projectIdToDelete = null;
 
-            const deleteModal = document.getElementById('deleteModal');
+        const deleteModal = document.getElementById('deleteModal');
 
-            deleteModal.addEventListener('show.bs.modal', e => {
-                const button = event.relatedTarget;
-                const projectId = button.getAttribute('data-project-id');
-                const projectName = button.getAttribute('data-project-name');
+        deleteModal.addEventListener('show.bs.modal', e => {
+            const button = e.relatedTarget;
+            const projectId = button.getAttribute('data-project-id');
+            document.getElementById('modal-project-name').textContent = button.getAttribute('data-project-name');
+            projectIdToDelete = projectId;
+        })
 
-                document.getElementById('modal-project-name').textContent = projectName;
-                projectIdToDelete = projectId;
-            })
-
-            document.getElementById('confirm-delete-btn').addEventListener('click', () => {
-                if (projectIdToDelete) {
-                    fetch("/delete-project", {
-                        method: "POST",
-                        body: JSON.stringify({projectId: projectIdToDelete}),
-                        headers: {"Content-Type": "application/json"}
-                    }).then(() => {
-                        window.location.href = "/";
-                    });
-                }
-            });
+        document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+            if (projectIdToDelete) {
+                fetch("/delete-project", {
+                    method: "POST",
+                    body: JSON.stringify({projectId: projectIdToDelete}),
+                    headers: {"Content-Type": "application/json"}
+                }).then(() => {
+                    window.location.href = "/";
+                });
+            }
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

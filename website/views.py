@@ -1,12 +1,15 @@
 import os
 import re
 import shutil
+
+import numpy as np
 from flask import Blueprint, render_template, url_for, redirect
 from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
-from .ml_model.classes_prediction import GeneratePrediction
+from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
+from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
 from .models import Project, db
 
@@ -23,7 +26,7 @@ def allowed_file(filename, extensions):
 def get_classification_classes(raw_input: str) -> str:
     cleaned = re.sub(r'[,;|/\\]+', ' ', raw_input)
 
-    cleaned = re.sub(r'[^\w]+', ' ', cleaned)
+    cleaned = re.sub(r'\W+', ' ', cleaned)
 
     words = cleaned.lower().split()
     unique_words = list(dict.fromkeys(words))
@@ -32,7 +35,7 @@ def get_classification_classes(raw_input: str) -> str:
 
 
 def load_dataset_file(upload_method, dataset_file, dataset_link, error, project_name):
-    kagglehub_pattern = re.compile(r'kagglehub\.dataset_download\("([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)"\)')
+    kagglehub_pattern = re.compile(r"kagglehub\.dataset_download\(\"([a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)\"\)")
     dataset = None
 
     if upload_method == "link" and dataset_link:
@@ -160,6 +163,7 @@ def new_project():
         project_name = form.get('project_name')
         classification_classes = get_classification_classes(form.get('classification_classes'))
         classification_method = form.get('classification_method')
+        print(classification_method)
         upload_method = form.get('upload_method')
         dataset_link = form.get('dataset_link')
         dataset_file = request.files.get('dataset_archive')
@@ -252,15 +256,41 @@ def classes_prediction_plot():
 
     class_names_dict = generate_classes_dictionary(project.classification_classes)
 
-    gp = GeneratePrediction(class_names=class_names_dict)
-    gp.load_data(project.dataset)
+    if project.classification_method == "random-forest-classifier":
+        gp = GeneratePredictionRandomForest(class_names=class_names_dict)
+        gp.load_data(project.dataset)
+        print("data is loading Random Forest")
+        #
+        # X, y, rows, cols, mask = gp.preprocess_data()
+        # clf, scaler, X_test, y_test = gp.train_random_forest_classifier(X, y)
+        # y_img = np.zeros((rows, cols), dtype=int)
+        # y_img[mask.reshape((rows, cols))] = y
+        # image_path = gp.visualize_results(clf, scaler, X, rows, cols, mask, y_img)
+    elif project.classification_method == "xg-boost":
+        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp.load_data(project.dataset)
+        print("data is loading xg-boost")
+    elif project.classification_method == "k-means":
+        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp.load_data(project.dataset)
+        print("data is loading k-means")
+    elif project.classification_method == "k-nearest":
+        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp.load_data(project.dataset)
+        print("data is loading k-nearest")
+    elif project.classification_method == "logistic-regression":
+        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp.load_data(project.dataset)
+        print("data is loading logistic-regression")
+    else:
+        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp.load_data(project.dataset)
 
     image_path = gp.compute_classification_results()
-    print("data is loading")
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user,
-                           project=project)
+                           project=project, classification_method=project.classification_method)
 
 
 @views.route('/delete-project', methods=['POST'])

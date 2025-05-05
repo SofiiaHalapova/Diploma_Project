@@ -2,11 +2,10 @@ import glob
 import os
 import shutil
 
-import kagglehub
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as sio
+import kagglehub
 
 matplotlib.use('Agg')
 
