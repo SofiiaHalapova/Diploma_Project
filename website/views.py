@@ -7,7 +7,8 @@ from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
-from .ml_model.k_means_classes_prediction import GeneratePredictionKNearest
+from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
+from .ml_model.logistic_regression_classes_prediction import GeneratePredictionLogisticRegression
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
@@ -255,32 +256,24 @@ def classes_prediction_plot():
         return redirect_response
 
     class_names_dict = generate_classes_dictionary(project.classification_classes)
+    gp=None
 
     if project.classification_method == "random-forest-classifier":
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
-        gp.load_data(project.dataset)
         print("data is loading Random Forest")
-
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
         print("data is loading xg-boost")
-    elif project.classification_method == "k-means":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
-        print("data is loading k-means")
     elif project.classification_method == "k-nearest":
         gp = GeneratePredictionKNearest(class_names=class_names_dict)
-        gp.load_data(project.dataset)
         print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
-        gp = GeneratePredictionKNearest(class_names=class_names_dict)
-        gp.load_data(project.dataset)
+        gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
         print("data is loading logistic-regression")
     else:
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
+        print("data is loading custom")
 
+    gp.load_data(project.dataset)
     image_path = gp.compute_classification_results()
 
     return render_template("class_prediction_plot.html",
