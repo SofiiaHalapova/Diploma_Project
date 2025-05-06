@@ -2,12 +2,12 @@ import os
 import re
 import shutil
 
-import numpy as np
 from flask import Blueprint, render_template, url_for, redirect
 from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
+from .ml_model.k_means_classes_prediction import GeneratePredictionKNearest
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
@@ -270,11 +270,11 @@ def classes_prediction_plot():
         gp.load_data(project.dataset)
         print("data is loading k-means")
     elif project.classification_method == "k-nearest":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp = GeneratePredictionKNearest(class_names=class_names_dict)
         gp.load_data(project.dataset)
         print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
+        gp = GeneratePredictionKNearest(class_names=class_names_dict)
         gp.load_data(project.dataset)
         print("data is loading logistic-regression")
     else:

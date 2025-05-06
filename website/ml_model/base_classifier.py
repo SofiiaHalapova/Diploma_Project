@@ -4,6 +4,8 @@ import string
 
 import numpy as np
 import seaborn as sns
+from matplotlib import pyplot as plt
+from matplotlib.colors import ListedColormap
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -69,21 +71,22 @@ class BaseClassifier:
         return X_train, X_test, y_train, y_test, rows, cols, mask
 
     @staticmethod
-    def save_prediction_to_file(plt, method):
+    def save_prediction_to_file(method):
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
         os.makedirs(static_img_path, exist_ok=True)
-        full_img_path = os.path.join(static_img_path, 'classes_prediction_xg_boost.png')
-        plt.savefig(full_img_path)
-        plt.close()
 
         characters = string.ascii_letters + string.digits
         random_string = "".join(random.choice(characters) for _ in range(5))
 
+        full_img_path = os.path.join(static_img_path, f'classes_prediction_{method}_{random_string}.png')
+        plt.savefig(full_img_path)
+        plt.close()
+
         return f'imgs/classes_prediction_{method}_{random_string}.png'
 
-    def plot_predictions_truth(self, cmap, y_pred_img, y_img, plt):
+    def plot_predictions_truth(self, cmap, y_pred_img, y_img):
         plt.figure(figsize=(15, 7))
 
         plt.subplot(1, 2, 1)
@@ -102,3 +105,28 @@ class BaseClassifier:
         plt.axis('off')
 
         plt.tight_layout()
+
+    def flattent_data(self, mask, clf, rows, cols, method):
+
+        y_pred_full = np.zeros(mask.shape, dtype=np.int32)
+        X_full = self.data.reshape((-1, self.data.shape[-1])).astype(np.float32) / 65535.0
+
+        if self.scaler:
+            X_full = self.scaler.transform(X_full)
+        if self.pca:
+            X_full = self.pca.transform(X_full)
+
+        y_pred_full[mask] = clf.predict(X_full[mask])
+
+        y_full = self.labels.ravel()
+
+        y_img = y_full.reshape((rows, cols))
+        y_pred_img = y_pred_full.reshape((rows, cols))
+
+        cmap = ListedColormap(self.class_colors)
+        self.plot_predictions_truth(cmap, y_pred_img, y_img)
+
+        return self.save_prediction_to_file(method)
+
+    def compute_classification_results(self):
+        raise NotImplementedError("Must be implemented by subclasses")
