@@ -1,8 +1,13 @@
+import os
+import random
+import string
+
 import numpy as np
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+
 from Ground_Detection_App.website.ml_model.load_data import LoadDataset
 
 
@@ -10,10 +15,10 @@ class BaseClassifier:
 
     def __init__(self, class_names):
         self.data = None
-        self.method = None
-        self.wavelength = None
+        # self.method = None
         self.labels = None
         self.class_names = class_names
+        self.wavelength = None
         self.scaler = None
         self.pca = None
         self.class_colors = sns.color_palette(None, len(class_names))
@@ -58,7 +63,42 @@ class BaseClassifier:
             self.pca = PCA(n_components=pca_components)
             X = self.pca.fit_transform(X)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state,
+                                                            stratify=y)
 
         return X_train, X_test, y_train, y_test, rows, cols, mask
 
+    @staticmethod
+    def save_prediction_to_file(plt, method):
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
+        os.makedirs(static_img_path, exist_ok=True)
+        full_img_path = os.path.join(static_img_path, 'classes_prediction_xg_boost.png')
+        plt.savefig(full_img_path)
+        plt.close()
+
+        characters = string.ascii_letters + string.digits
+        random_string = "".join(random.choice(characters) for _ in range(5))
+
+        return f'imgs/classes_prediction_{method}_{random_string}.png'
+
+    def plot_predictions_truth(self, cmap, y_pred_img, y_img, plt):
+        plt.figure(figsize=(15, 7))
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(y_pred_img, cmap=cmap)
+        plt.title('Predicted Classes')
+        plt.axis('off')
+
+        patches = [plt.plot([], [], marker="o", ms=10, ls="", mec=None, color=self.class_colors[i],
+                            label="{:d}: {}".format(i, self.class_names[i]))[0] for i in range(len(self.class_names))]
+
+        plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(y_img, cmap=cmap)
+        plt.title('Ground Truths')
+        plt.axis('off')
+
+        plt.tight_layout()

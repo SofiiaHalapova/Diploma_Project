@@ -260,12 +260,7 @@ def classes_prediction_plot():
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
         gp.load_data(project.dataset)
         print("data is loading Random Forest")
-        #
-        # X, y, rows, cols, mask = gp.preprocess_data()
-        # clf, scaler, X_test, y_test = gp.train_random_forest_classifier(X, y)
-        # y_img = np.zeros((rows, cols), dtype=int)
-        # y_img[mask.reshape((rows, cols))] = y
-        # image_path = gp.visualize_results(clf, scaler, X, rows, cols, mask, y_img)
+
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
         gp.load_data(project.dataset)
