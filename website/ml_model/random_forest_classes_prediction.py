@@ -10,7 +10,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, precision_score, recall_score, \
     f1_score
 from matplotlib.colors import ListedColormap
-import kagglehub
 
 from Ground_Detection_App.website.ml_model.load_data import LoadDataset
 
@@ -79,26 +78,6 @@ class GeneratePredictionRandomForest:
 
         return clf, scaler, X_test_scaled, y_test
 
-    # def calculate_metrics(self, clf, X_test, y_test):
-    #     y_pred = clf.predict(X_test)
-    #
-    #     accuracy = accuracy_score(y_test, y_pred)
-    #     print(f"Загальна точність: {accuracy:.4f}")
-    #
-    #     cm = confusion_matrix(y_test, y_pred)
-    #     class_names = list(self.CLASS_NAMES.values())[1:]  # Remove "Background"
-    #
-    #     # Plot confusion matrix
-    #     plt.figure(figsize=(15, 7))
-    #     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
-    #     plt.xlabel("Predicted Label")
-    #     plt.ylabel("True Label")
-    #     plt.title("Confusion Matrix Random Forest Classifier")
-    #     plt.xticks(rotation=45)
-    #     plt.show()
-    #
-    #     print("\nClassification Report:\n",
-    #           classification_report(y_test, y_pred, target_names=class_names, zero_division=0))
 
     def visualize_results(self, clf, scaler, X, rows, cols, mask, y_img):
         # Predict entire image
@@ -147,5 +126,31 @@ class GeneratePredictionRandomForest:
         y_img[mask.reshape((rows, cols))] = y
         return self.visualize_results(clf, scaler, X, rows, cols, mask, y_img)
 
-# if __name__ == "__main__":
-#     main()
+
+
+
+
+
+
+
+
+    # def calculate_metrics(self, clf, X_test, y_test):
+    #     y_pred = clf.predict(X_test)
+    #
+    #     accuracy = accuracy_score(y_test, y_pred)
+    #     print(f"Загальна точність: {accuracy:.4f}")
+    #
+    #     cm = confusion_matrix(y_test, y_pred)
+    #     class_names = list(self.CLASS_NAMES.values())[1:]  # Remove "Background"
+    #
+    #     # Plot confusion matrix
+    #     plt.figure(figsize=(15, 7))
+    #     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    #     plt.xlabel("Predicted Label")
+    #     plt.ylabel("True Label")
+    #     plt.title("Confusion Matrix Random Forest Classifier")
+    #     plt.xticks(rotation=45)
+    #     plt.show()
+    #
+    #     print("\nClassification Report:\n",
+    #           classification_report(y_test, y_pred, target_names=class_names, zero_division=0))
