@@ -228,7 +228,7 @@ def create_class_distribution_plot():
 @views.route('/class_distribution_plot', methods=['GET'])
 @login_required
 def class_distribution_plot():
-    return render_plot_page(lambda de: de.plot_class_distribution(), "class_distribution_plot.html",
+    return render_plot_page(lambda de, save_path: de.plot_class_distribution(save_path=save_path), "class_distribution_plot.html",
                             plot_name='class_distribution_plot')
 
 
@@ -254,7 +254,7 @@ def create_comprehensive_review_plot():
 @views.route('/comprehensive_review_plot', methods=['GET'])
 @login_required
 def comprehensive_review_plot():
-    return render_plot_page(lambda de: de.plot_comprehensive_review(), "comprehensive_review_plot.html",
+    return render_plot_page(lambda de, save_path: de.plot_comprehensive_review(save_path=save_path), "comprehensive_review_plot.html",
                             plot_name="comprehensive_review_plot")
 
 

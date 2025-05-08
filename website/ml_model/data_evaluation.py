@@ -41,7 +41,7 @@ class DataEvaluation:
         false_color = np.dstack([self.data[:, :, b] for b in bands])
         return (false_color - false_color.min()) / (false_color.max() - false_color.min())
 
-    def plot_class_distribution(self):
+    def plot_class_distribution(self, save_path,):
 
         if self.labels is None:
             raise ValueError("Labels not defined")
@@ -69,15 +69,9 @@ class DataEvaluation:
 
         plt.tight_layout()
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
-        os.makedirs(static_img_path, exist_ok=True)
+        static_img_path = os.path.dirname(save_path) if save_path else None
 
-        full_img_path = os.path.join(static_img_path, 'class_distribution.png')
-        plt.savefig(full_img_path)
-        plt.close()
-
-        return 'imgs/class_distribution.png'
+        return self.save_plot_to_file('class_distribution', save_dir=static_img_path)
 
     # Візуалізація спектральних характеристик
     def plot_sample_spectra(self, save_path, selected_classes=None):
@@ -104,7 +98,7 @@ class DataEvaluation:
 
         return self.save_plot_to_file('sample_spectra', save_dir=static_img_path)
 
-    def plot_comprehensive_review(self):
+    def plot_comprehensive_review(self, save_path):
         fig, axes = plt.subplots(2, 2, figsize=(15, 15))
 
         false_color = self.create_false_color()
@@ -129,12 +123,7 @@ class DataEvaluation:
 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
-        os.makedirs(static_img_path, exist_ok=True)
+        static_img_path = os.path.dirname(save_path) if save_path else None
 
-        full_img_path = os.path.join(static_img_path, 'comprehensive_review.png')
-        plt.savefig(full_img_path)
-        plt.close()
+        return self.save_plot_to_file('comprehensive_review', save_dir=static_img_path)
 
-        return 'imgs/comprehensive_review.png'
