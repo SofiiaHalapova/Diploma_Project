@@ -1,5 +1,6 @@
-from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 from sklearn.neighbors import KNeighborsClassifier
+
+from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 
 
 class GeneratePredictionKNearest(BaseClassifier):

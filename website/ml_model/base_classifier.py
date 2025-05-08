@@ -4,13 +4,16 @@ import string
 
 import numpy as np
 import seaborn as sns
-from matplotlib import pyplot as plt
+import matplotlib
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from Ground_Detection_App.website.ml_model.load_data import LoadDataset
+
+matplotlib.use('TkAgg')
 
 
 class BaseClassifier:
