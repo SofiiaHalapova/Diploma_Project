@@ -262,7 +262,7 @@ def comprehensive_review_plot():
 @login_required
 def create_classes_prediction_plot():
     print("create_classes_prediction_plot is called")
-    return redirect(url_for('views.classes_prediction_plot'))
+    return render_template("loading.html", user=current_user)
 
 
 @views.route('/classes_prediction_plot', methods=['GET'])
