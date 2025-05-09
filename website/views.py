@@ -1,13 +1,16 @@
 import os
+import random
 import re
 import shutil
+import string
 
-import numpy as np
-from flask import Blueprint, render_template, url_for, redirect
+from flask import Blueprint, render_template, url_for, redirect, send_file
 from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
+from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
+from .ml_model.logistic_regression_classes_prediction import GeneratePredictionLogisticRegression
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
@@ -15,8 +18,11 @@ from .models import Project, db
 
 views = Blueprint('views', __name__)
 
-UPLOAD_DATASETS_FOLDER = os.path.join('static', 'uploads')
+
 ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz'}
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_FOLDER = os.path.join(CURRENT_DIR, 'static')
+UPLOAD_DATASETS_FOLDER = os.path.join(STATIC_FOLDER, 'uploads')
 
 
 def allowed_file(filename, extensions):
@@ -47,6 +53,7 @@ def load_dataset_file(upload_method, dataset_file, dataset_link, error, project_
     elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename, ALLOWED_EXTENSIONS):
         filename = secure_filename(dataset_file.filename)
         file_path = os.path.join(UPLOAD_DATASETS_FOLDER, filename)
+        print("views archive file path", file_path)
         dataset_file.save(file_path)
         dataset = unarchive_dataset(file_path, project_name)
     else:
@@ -106,7 +113,7 @@ def generate_classes_dictionary(class_names) -> dict:
     return class_names_dict
 
 
-def render_plot_page(plot_func, template):
+def render_plot_page(plot_func, template, plot_name):
     project, redirect_response = get_current_project_or_redirect()
     if redirect_response:
         return redirect_response
@@ -116,7 +123,16 @@ def render_plot_page(plot_func, template):
     de = DataEvaluation(class_names=class_names_dict)
     de.load_data(project.dataset)
 
-    image_path = plot_func(de)
+    img_directory = os.path.join(os.path.abspath(STATIC_FOLDER), 'imgs')
+
+    os.makedirs(img_directory, exist_ok=True)
+
+    random_string = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+
+    full_image_path = os.path.join(img_directory, f'{plot_name}_{random_string}.png')
+
+    image_path = plot_func(de, save_path=full_image_path)
+
     return render_template(template, image_path=url_for('static', filename=image_path), user=current_user,
                            project=project)
 
@@ -212,7 +228,8 @@ def create_class_distribution_plot():
 @views.route('/class_distribution_plot', methods=['GET'])
 @login_required
 def class_distribution_plot():
-    return render_plot_page(lambda de: de.plot_class_distribution(), "class_distribution_plot.html")
+    return render_plot_page(lambda de, save_path: de.plot_class_distribution(save_path=save_path), "class_distribution_plot.html",
+                            plot_name='class_distribution_plot')
 
 
 @views.route('/create_sample_spectra_plot', methods=['POST'])
@@ -224,7 +241,8 @@ def create_sample_spectra_plot():
 @views.route('/sample_spectra_plot', methods=['GET'])
 @login_required
 def sample_spectra_plot():
-    return render_plot_page(lambda de: de.plot_sample_spectra(), "sample_spectra_plot.html")
+    return render_plot_page(lambda de, save_path: de.plot_sample_spectra(save_path=save_path),
+                            "sample_spectra_plot.html", plot_name='sample_spectra_plot')
 
 
 @views.route('/create_comprehensive_review_plot', methods=['POST'])
@@ -236,14 +254,15 @@ def create_comprehensive_review_plot():
 @views.route('/comprehensive_review_plot', methods=['GET'])
 @login_required
 def comprehensive_review_plot():
-    return render_plot_page(lambda de: de.plot_comprehensive_review(), "comprehensive_review_plot.html")
+    return render_plot_page(lambda de, save_path: de.plot_comprehensive_review(save_path=save_path), "comprehensive_review_plot.html",
+                            plot_name="comprehensive_review_plot")
 
 
 @views.route('/create_classes_prediction_plot', methods=['GET', 'POST'])
 @login_required
 def create_classes_prediction_plot():
     print("create_classes_prediction_plot is called")
-    return redirect(url_for('views.classes_prediction_plot'))
+    return render_template("loading.html", user=current_user)
 
 
 @views.route('/classes_prediction_plot', methods=['GET'])
@@ -255,42 +274,50 @@ def classes_prediction_plot():
         return redirect_response
 
     class_names_dict = generate_classes_dictionary(project.classification_classes)
+    gp = None
 
     if project.classification_method == "random-forest-classifier":
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
-        gp.load_data(project.dataset)
         print("data is loading Random Forest")
-        #
-        # X, y, rows, cols, mask = gp.preprocess_data()
-        # clf, scaler, X_test, y_test = gp.train_random_forest_classifier(X, y)
-        # y_img = np.zeros((rows, cols), dtype=int)
-        # y_img[mask.reshape((rows, cols))] = y
-        # image_path = gp.visualize_results(clf, scaler, X, rows, cols, mask, y_img)
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
         print("data is loading xg-boost")
-    elif project.classification_method == "k-means":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
-        print("data is loading k-means")
     elif project.classification_method == "k-nearest":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
+        gp = GeneratePredictionKNearest(class_names=class_names_dict)
         print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
+        gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
         print("data is loading logistic-regression")
     else:
-        gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        gp.load_data(project.dataset)
+        print("data is loading custom")
 
+    gp.load_data(project.dataset)
     image_path = gp.compute_classification_results()
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user,
                            project=project, classification_method=project.classification_method)
+
+
+@views.route('/download', methods=['GET', 'POST'])
+def download():
+    project, redirect_response = get_current_project_or_redirect()
+    if redirect_response:
+        return redirect_response
+
+    filename = request.args.get("filename")
+
+    if not filename:
+        flash("Filename not provided", "error")
+        return redirect(url_for("views.project_details", project_id=project.id))
+
+    save_path = os.path.join(STATIC_FOLDER, filename.replace("static/", "").replace("\\", "/"))
+
+    if not os.path.exists(save_path):
+        flash("File not found", "error")
+        return redirect(url_for("views.project_details", project_id=project.id))
+
+    return send_file(save_path, as_attachment=True)
 
 
 @views.route('/delete-project', methods=['POST'])

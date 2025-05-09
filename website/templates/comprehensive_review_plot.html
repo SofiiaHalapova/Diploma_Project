@@ -4,6 +4,10 @@
         <img src="{{ image_path }}" style="max-width: 90%; height: auto; margin: 20px auto; display: block;"
              alt="Class Distribution">
         <br>
+        <a class="btn btn-success" href="{{ url_for('views.download',filename=image_path.replace('/static/', '')) }}">
+            Download
+        </a>
+        <br>
         <a class="btn btn-light" href="{{ url_for('views.project_details', project_id=project.id) }}">
             Back
         </a>
