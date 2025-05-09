@@ -74,11 +74,12 @@ class DataEvaluation:
         return self.save_plot_to_file('class_distribution', save_dir=static_img_path)
 
     # Візуалізація спектральних характеристик
-    def plot_sample_spectra(self, save_path, selected_classes):
-        if selected_classes is None:
+    def plot_sample_spectra(self, save_path, selected_classes=None):
+
+        if not selected_classes or selected_classes is None:
             selected_classes = [i for i in range(len(self.class_names))]
-        else:
-            selected_classes = list(map(int, selected_classes))
+
+        selected_classes = list(map(int, selected_classes))
         plt.figure(figsize=(20, 10))
 
         for class_id in selected_classes:
