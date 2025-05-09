@@ -18,7 +18,6 @@ from .models import Project, db
 
 views = Blueprint('views', __name__)
 
-
 ALLOWED_EXTENSIONS = {'zip', 'tar', 'gz'}
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_FOLDER = os.path.join(CURRENT_DIR, 'static')
@@ -228,8 +227,8 @@ def create_class_distribution_plot():
 @views.route('/class_distribution_plot', methods=['GET'])
 @login_required
 def class_distribution_plot():
-    return render_plot_page(lambda de, save_path: de.plot_class_distribution(save_path=save_path), "class_distribution_plot.html",
-                            plot_name='class_distribution_plot')
+    return render_plot_page(lambda de, save_path: de.plot_class_distribution(save_path=save_path),
+                            "class_distribution_plot.html", plot_name='class_distribution_plot')
 
 
 @views.route('/create_sample_spectra_plot', methods=['POST'])
@@ -254,8 +253,8 @@ def create_comprehensive_review_plot():
 @views.route('/comprehensive_review_plot', methods=['GET'])
 @login_required
 def comprehensive_review_plot():
-    return render_plot_page(lambda de, save_path: de.plot_comprehensive_review(save_path=save_path), "comprehensive_review_plot.html",
-                            plot_name="comprehensive_review_plot")
+    return render_plot_page(lambda de, save_path: de.plot_comprehensive_review(save_path=save_path),
+                            "comprehensive_review_plot.html", plot_name="comprehensive_review_plot")
 
 
 @views.route('/create_classes_prediction_plot', methods=['GET', 'POST'])

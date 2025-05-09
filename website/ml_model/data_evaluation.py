@@ -126,4 +126,3 @@ class DataEvaluation:
         static_img_path = os.path.dirname(save_path) if save_path else None
 
         return self.save_plot_to_file('comprehensive_review', save_dir=static_img_path)
-

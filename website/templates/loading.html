@@ -3,13 +3,13 @@
 {% block content %}
 <div style="text-align: center; margin-top: 100px;">
     <h2>Running classification, please wait...</h2>
+    <br>
     <div class="spinner-border text-primary" role="status" style="width: 5rem; height: 5rem;"></div>
 </div>
 
 <script>
-    // After a short delay (e.g., 500ms), redirect to results
     setTimeout(function () {
         window.location.href = "{{ url_for('views.classes_prediction_plot') }}";
-    }, 1000);
+    }, 500);
 </script>
 {% endblock %}
