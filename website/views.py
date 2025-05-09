@@ -178,7 +178,6 @@ def new_project():
         project_name = form.get('project_name')
         classification_classes = get_classification_classes(form.get('classification_classes'))
         classification_method = form.get('classification_method')
-        print(classification_method)
         upload_method = form.get('upload_method')
         dataset_link = form.get('dataset_link')
         dataset_file = request.files.get('dataset_archive')
@@ -215,7 +214,8 @@ def new_project():
 def project_details(project_id):
     project = Project.query.get_or_404(project_id)
     session['current_project_id'] = project_id
-    return render_template("project_workspace.html", user=current_user, project=project)
+    return render_template("project_workspace.html", user=current_user, project=project,
+                           class_names=generate_classes_dictionary(project.classification_classes))
 
 
 @views.route('/create_class_distribution_plot', methods=['POST'])
@@ -231,16 +231,21 @@ def class_distribution_plot():
                             "class_distribution_plot.html", plot_name='class_distribution_plot')
 
 
-@views.route('/create_sample_spectra_plot', methods=['POST'])
+@views.route('/create_sample_spectra_plot', methods=['GET', 'POST'])
 @login_required
 def create_sample_spectra_plot():
+    if request.method == "POST":
+        spectras_to_analyze = request.form.getlist('multiDropdownSpectras')
+        session['spectras_to_analyze'] = spectras_to_analyze
     return redirect(url_for('views.sample_spectra_plot'))
 
 
-@views.route('/sample_spectra_plot', methods=['GET'])
+@views.route('/sample_spectra_plot', methods=['GET', 'POST'])
 @login_required
 def sample_spectra_plot():
-    return render_plot_page(lambda de, save_path: de.plot_sample_spectra(save_path=save_path),
+    selected_classes = session.pop('spectras_to_analyze', None)
+    return render_plot_page(lambda de, save_path: de.plot_sample_spectra(save_path=save_path,
+                                                                         selected_classes=selected_classes),
                             "sample_spectra_plot.html", plot_name='sample_spectra_plot')
 
 

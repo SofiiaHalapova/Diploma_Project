@@ -41,7 +41,7 @@ class DataEvaluation:
         false_color = np.dstack([self.data[:, :, b] for b in bands])
         return (false_color - false_color.min()) / (false_color.max() - false_color.min())
 
-    def plot_class_distribution(self, save_path,):
+    def plot_class_distribution(self, save_path, ):
 
         if self.labels is None:
             raise ValueError("Labels not defined")
@@ -74,11 +74,12 @@ class DataEvaluation:
         return self.save_plot_to_file('class_distribution', save_dir=static_img_path)
 
     # Візуалізація спектральних характеристик
-    def plot_sample_spectra(self, save_path, selected_classes=None):
-
+    def plot_sample_spectra(self, save_path, selected_classes):
         if selected_classes is None:
-            selected_classes = [2, 5, 7]
-        plt.figure(figsize=(15, 5))
+            selected_classes = [i for i in range(len(self.class_names))]
+        else:
+            selected_classes = list(map(int, selected_classes))
+        plt.figure(figsize=(20, 10))
 
         for class_id in selected_classes:
             # маска, тобто обрані елементи для класифікації
