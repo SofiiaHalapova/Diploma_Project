@@ -56,17 +56,17 @@ class BaseClassifier:
         if scale:
             self.scaler = StandardScaler()
             X_train = self.scaler.fit_transform(X_train)
-            X_test = self.scaler.transform(X)
+            X_test = self.scaler.transform(X_test)
 
         if pca_components is not None:
             self.pca = PCA(n_components=pca_components)
             X_train = self.pca.fit_transform(X_train)
-            X_test = self.pca.transform(X)
+            X_test = self.pca.transform(X_test)
 
         return X_train, X_test, y_train, y_test, rows, cols, mask
 
     @staticmethod
-    def save_prediction_to_file(method):
+    def save_prediction_to_file(method, fig=None, metric_type=None):
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
@@ -75,11 +75,19 @@ class BaseClassifier:
         characters = string.ascii_letters + string.digits
         random_string = "".join(random.choice(characters) for _ in range(5))
 
-        full_img_path = os.path.join(static_img_path, f'classes_prediction_{method}_{random_string}.png')
-        plt.savefig(full_img_path)
-        plt.close()
+        if fig is not None:
+            full_img_path = os.path.join(static_img_path, f'{metric_type}_{method}_{random_string}.png')
+            fig.savefig(full_img_path)
+            plt.close(fig)
+        else:
+            full_img_path = os.path.join(static_img_path, f'classes_prediction_{method}_{random_string}.png')
+            plt.savefig(full_img_path)
+            plt.close()
 
-        return f'imgs/classes_prediction_{method}_{random_string}.png'
+        if metric_type is not None:
+            return f'imgs/{metric_type}_{method}_{random_string}.png'
+        else:
+            return f'imgs/classes_prediction_{method}_{random_string}.png'
 
     def plot_predictions_truth(self, y_pred_img, y_img):
         plt.figure(figsize=(15, 7))
@@ -103,11 +111,27 @@ class BaseClassifier:
 
         plt.tight_layout()
 
-    def flattent_data(self, mask, clf, rows, cols,X_test, method):
+    def flattent_data(self, mask, clf, rows, cols, y_test, X_test, method):
+        y_pred_test = clf.predict(X_test)
 
-        y_pred = clf.predict(X_test)
+        fig, metric_type = self.plot_confusion_matrix(y_test, y_pred_test)
+
+        self.save_prediction_to_file(method, fig, metric_type)
+
+        X_full = self.data.astype(np.float32) / 65535.0
+        X_full = X_full.reshape((-1, X_full.shape[-1]))
+        X_full_masked = X_full[mask]
+
+        if self.scaler:
+            X_full_masked = self.scaler.transform(X_full_masked)
+
+        if self.pca:
+            X_full_masked = self.pca.transform(X_full_masked)
+
+        y_pred_raw = clf.predict(X_full_masked)
+
         y_pred_full = np.zeros(rows * cols, dtype=np.int32)
-        y_pred_full[mask] = y_pred + 1
+        y_pred_full[mask] = y_pred_raw + 1
 
         y_pred_img = y_pred_full.reshape((rows, cols))
 
@@ -123,7 +147,8 @@ class BaseClassifier:
         fig, ax = plt.subplots(figsize=(12, 12))
         disp.plot(ax=ax, cmap="Blues", xticks_rotation=45)
         plt.tight_layout()
-        plt.show()
+
+        return fig, "confusion_matrix"
 
     def print_prediction_distribution(self, y_pred):
         counts = pd.Series(y_pred).value_counts().sort_index()

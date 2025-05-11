@@ -19,4 +19,4 @@ class GeneratePredictionRandomForest(BaseClassifier):
         clf = RandomForestClassifier(n_estimators=100, random_state=42)
         clf.fit(X_train, y_train)
 
-        return self.flattent_data(mask, clf, rows, cols, X_test, 'random_forest')
+        return self.flattent_data(mask, clf, rows, cols, y_test, X_test, 'random_forest')
