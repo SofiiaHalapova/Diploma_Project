@@ -19,4 +19,4 @@ class GeneratePredictionLogisticRegression(BaseClassifier):
         clf = LogisticRegression(max_iter=1000, random_state=42)
         clf.fit(X_train, y_train)
 
-        return self.flattent_data(mask, clf, rows, cols, 'logistic-regression')
+        return self.flattent_data(mask, clf, rows, cols, X_test, 'logistic-regression')

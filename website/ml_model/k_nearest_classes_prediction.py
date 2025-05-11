@@ -20,4 +20,4 @@ class GeneratePredictionKNearest(BaseClassifier):
 
         knn.fit(X_train, y_train)
 
-        return self.flattent_data(mask, knn, rows, cols, 'knn')
+        return self.flattent_data(mask, knn, rows, cols, X_test, 'knn')
