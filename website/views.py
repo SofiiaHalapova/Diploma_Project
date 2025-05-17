@@ -11,7 +11,9 @@ from werkzeug.utils import secure_filename
 
 from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
 from .ml_model.logistic_regression_classes_prediction import GeneratePredictionLogisticRegression
+# from .ml_model.neural_network_classes_prediction import GeneratePredictionCNN
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
+from .ml_model.svm_classes_prediction import GeneratePredictionSVM
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
 from .models import Project, db
@@ -292,8 +294,12 @@ def classes_prediction_plot():
     elif project.classification_method == "logistic-regression":
         gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
         print("data is loading logistic-regression")
+    elif project.classification_method == "svm":
+        gp = GeneratePredictionSVM(class_names=class_names_dict)
+        print("data is loading svm")
     else:
-        print("data is loading custom")
+        # gp = GeneratePredictionCNN(class_names=class_names_dict)
+        print("data is loading cnn")
 
     gp.load_data(project.dataset)
     image_path = gp.compute_classification_results()

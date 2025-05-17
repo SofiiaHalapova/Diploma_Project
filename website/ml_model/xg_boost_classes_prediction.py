@@ -1,4 +1,3 @@
-import numpy as np
 from xgboost import XGBClassifier
 from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 

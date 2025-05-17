@@ -110,6 +110,7 @@ class BaseClassifier:
         plt.axis('off')
 
         plt.tight_layout()
+        plt.show()
 
     def flattent_data(self, mask, clf, rows, cols, y_test, X_test, method):
         y_pred_test = clf.predict(X_test)
