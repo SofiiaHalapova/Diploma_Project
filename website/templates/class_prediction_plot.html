@@ -13,14 +13,34 @@
                     ">
                 {{ classification_method }} Prediction
             </h1>
+
+            <br>
+            <div class="img-fluid rounded shadow-sm mb-4" style="margin-bottom:1rem;">
+                <img src="{{ image_path }}"
+                     alt="Classes Prediction"
+                     style="max-width: 90%; height: auto;">
+                <br>
+                <div style="text-align: center;">
+                    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        font-weight: 500;
+                        font-size: 3rem;
+                        color: #2c3e50;
+                        position: relative;
+                        display: inline-block;
+                        margin-top: 1rem;
+                        padding-bottom: 0.3rem;
+                        margin-bottom: 1.5rem;
+                    ">
+                        Confusion Matrix
+                    </h1>
+                </div>
+                <img src="{{ cm_path }}"
+                     alt="Confusion Matrix"
+                     style="max-width: 70%; height: auto;">
+                <br>
+            </div>
         </div>
-        <br>
-        <img src="{{ image_path }}"
-             alt="Classes Prediction"
-             class="img-fluid rounded shadow-sm mb-4"
-             style="max-width: 90%; height: auto;">
-        <br>
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between" style="margin-bottom: 1.5rem;">
             <a class="btn btn-light" href="{{ url_for('views.project_details', project_id=project.id) }}">
                 ← Back
             </a>

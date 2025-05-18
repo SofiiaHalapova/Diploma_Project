@@ -66,7 +66,7 @@ class BaseClassifier:
         return X_train, X_test, y_train, y_test, rows, cols, mask
 
     @staticmethod
-    def save_prediction_to_file(method, fig=None, metric_type=None):
+    def save_prediction_to_file(method, metric_type=None):
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         static_img_path = os.path.join(current_dir, '..', 'static', 'imgs')
@@ -75,19 +75,20 @@ class BaseClassifier:
         characters = string.ascii_letters + string.digits
         random_string = "".join(random.choice(characters) for _ in range(5))
 
-        if fig is not None:
-            full_img_path = os.path.join(static_img_path, f'{metric_type}_{method}_{random_string}.png')
-            fig.savefig(full_img_path)
-            plt.close(fig)
-        else:
-            full_img_path = os.path.join(static_img_path, f'classes_prediction_{method}_{random_string}.png')
-            plt.savefig(full_img_path)
-            plt.close()
-
         if metric_type is not None:
-            return f'imgs/{metric_type}_{method}_{random_string}.png'
+            filename = f'{metric_type}_{method}_{random_string}.png'
         else:
-            return f'imgs/classes_prediction_{method}_{random_string}.png'
+            filename = f'classes_prediction_{method}_{random_string}.png'
+
+        full_img_path = os.path.join(static_img_path, filename)
+        plt.savefig(full_img_path)
+        plt.close()
+
+        # if metric_type is not None:
+        #     return f'imgs/{metric_type}_{method}_{random_string}.png'
+        # else:
+        #     return f'imgs/classes_prediction_{method}_{random_string}.png'
+        return f'imgs/{filename}'
 
     def plot_predictions_truth(self, y_pred_img, y_img):
         plt.figure(figsize=(15, 7))
@@ -114,11 +115,6 @@ class BaseClassifier:
         return None
 
     def flattent_data(self, mask, clf, rows, cols, y_test, X_test, method):
-        y_pred_test = clf.predict(X_test)
-
-        fig, metric_type = self.plot_confusion_matrix(y_test, y_pred_test)
-
-        self.save_prediction_to_file(method, fig, metric_type)
 
         X_full = self.data.astype(np.float32) / 65535.0
         X_full = X_full.reshape((-1, X_full.shape[-1]))
@@ -142,16 +138,81 @@ class BaseClassifier:
 
         self.plot_predictions_truth(y_pred_img, y_img)
 
-        return self.save_prediction_to_file(method)
+        return self.save_prediction_to_file(method), y_pred_img
 
     def plot_confusion_matrix(self, y_true, y_pred):
-        cm = confusion_matrix(y_true, y_pred)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=self.class_names)
+        # 1) find unique labels that actually appear in y_true
+        labels = np.unique(y_true)
+        # 2) build the matrix for those labels only
+        cm = confusion_matrix(y_true, y_pred, labels=labels)
+
+        # 3) map each numeric label to its class name
+        #    assume self.class_names is either a dict {0:"foo",1:"bar",…}
+        #    or a list ['foo','bar',…]
+        try:
+            display_labels = [self.class_names[int(l)] for l in labels]
+        except (KeyError, IndexError):
+            # fallback if your class_names is something else
+            display_labels = [str(l) for l in labels]
+
+        # 4) plot
         fig, ax = plt.subplots(figsize=(12, 12))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                      display_labels=display_labels)
         disp.plot(ax=ax, cmap="Blues", xticks_rotation=45)
         plt.tight_layout()
+        return fig
 
-        return fig, "confusion_matrix"
+    def get_confusion_matrix(self, y_pred_img, method):
+        # flatten both arrays and mask out background if needed
+        y_pred_flat = y_pred_img.ravel()
+        y_true_flat = self.labels.ravel()
+        mask = y_true_flat > 0
+        y_pred_flat = y_pred_flat[mask] - 1
+        y_true_flat = y_true_flat[mask] - 1
+
+        # now plot and save
+        fig = self.plot_confusion_matrix(y_true_flat, y_pred_flat)
+        # save it
+        return self.save_prediction_to_file(method, metric_type="confusion_matrix")
+
+    # def plot_confusion_matrix(self, y_true, y_pred):
+    #     cm = confusion_matrix(y_true, y_pred)
+    #     n_classes = cm.shape[0]
+    #     if isinstance(self.class_names, dict):
+    #         labels = [self.class_names[i] for i in range(n_classes)]
+    #     else:
+    #         labels = list(self.class_names)[:n_classes]
+    #
+    #     # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=self.class_names)
+    #     # fig, ax = plt.subplots(figsize=(12, 12))
+    #     # disp.plot(ax=ax, cmap="Blues", xticks_rotation=45)
+    #     # plt.tight_layout()
+    #     #
+    #     # return fig, "confusion_matrix"
+    #     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+    #                                   display_labels=labels)
+    #     fig, ax = plt.subplots(figsize=(12, 12))
+    #     disp.plot(ax=ax, cmap="Blues", xticks_rotation=45)
+    #     plt.tight_layout()
+    #
+    #     return fig, "confusion_matrix"
+    #
+    # def get_confusion_matrix(self, y_pred_img, method):
+    #     y_pred_flat = y_pred_img.ravel()
+    #     y_true_flat = self.labels.ravel()
+    #
+    #     mask = y_true_flat > 0
+    #     y_pred_flat = y_pred_flat[mask] - 1
+    #     y_true_flat = y_true_flat[mask] - 1
+    #
+    #     # Plot and save confusion matrix
+    #     self.plot_confusion_matrix(y_true_flat, y_pred_flat)
+    #     # self.save_prediction_to_file(method, fig, metric_type)
+    #
+    #     # def save_prediction_to_file(method, fig=None, metric_type=None):
+    #
+    #     return self.save_prediction_to_file(method, metric_type="confusion_matrix")
 
     def print_prediction_distribution(self, y_pred):
         counts = pd.Series(y_pred).value_counts().sort_index()

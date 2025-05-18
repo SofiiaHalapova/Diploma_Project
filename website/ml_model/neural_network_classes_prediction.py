@@ -19,6 +19,7 @@ class GeneratePredictionCNN(BaseClassifier):
         self.numComponents = 30
         self.patch_size = 7
         self.test_size = 0.25
+        # self.class_names = [cls for cls in class_names if cls != 'background']
 
     @staticmethod
     def applyPCA(X, numComponents=75):
@@ -99,7 +100,7 @@ class GeneratePredictionCNN(BaseClassifier):
         model.add(MaxPooling2D((2, 2)))
         model.add(Flatten())
         model.add(Dense(128, activation='relu'))
-        model.add(Dense(len(self.class_names), activation='softmax'))
+        model.add(Dense(y_train.shape[1], activation='softmax'))
 
         model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=1e-4), metrics=['accuracy'])
 
@@ -157,4 +158,6 @@ class GeneratePredictionCNN(BaseClassifier):
 
         self.plot_predictions_truth(y_pred_img, self.labels)
 
-        return self.save_prediction_to_file("cnn")
+        return self.save_prediction_to_file("cnn"), y_pred_img
+
+

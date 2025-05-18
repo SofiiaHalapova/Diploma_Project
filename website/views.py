@@ -309,11 +309,12 @@ def classes_prediction_plot():
         # print("data is loading cnn")
 
     gp.load_data(project.dataset)
-    image_path = gp.compute_classification_results()
+    image_path, y_pred_img = gp.compute_classification_results()
+    cm_path = gp.get_confusion_matrix(y_pred_img, method)
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user,
-                           project=project, classification_method=method)
+                           project=project, classification_method=method, cm_path=url_for('static', filename=cm_path))
 
 
 @views.route('/download', methods=['GET', 'POST'])
