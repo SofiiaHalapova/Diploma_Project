@@ -6,24 +6,68 @@
                 data-target="#dataUploadModal"
                 data-whatever="@mdo">New Project
         </button>
-
         <br>
         <br>
         <p id="projects_list_title">User {{ user.first_name }}'s projects</p>
-        <ol id="projects_list" class="list-group list-group-numbered">
+        <ol class="list-group">
             {% for project in user.projects %}
                 <li class="list-group-item">
-                    <a class="btn btn-light" href="{{ url_for('views.project_details', project_id=project.id) }}">
-                        {{ project.project_name }} (Created: {{ project.date_created.strftime('%Y-%m-%d') }})
-                    </a>
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#deleteModal"
-                            data-project-id="{{ project.id }}"
-                            data-project-name="{{ project.project_name }}" class="close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {{ loop.index }}.&nbsp;
+                            <a class="btn btn-light"
+                               href="{{ url_for('views.project_details', project_id=project.id) }}">
+                                {{ project.project_name }} (Created: {{ project.date_created.strftime('%Y-%m-%d') }})
+                            </a>
+                        </div>
+
+                        <div>
+                            <button type="button" class="btn btn-outline-info btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#renameModal"
+                                    data-project-id="{{ project.id }}"
+                                    data-project-name="{{ project.project_name }}">
+                                Rename project
+                            </button>
+
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                    data-project-id="{{ project.id }}"
+                                    data-project-name="{{ project.project_name }}">
+                                &times;
+                            </button>
+                        </div>
+                    </div>
                 </li>
             {% endfor %}
         </ol>
+
+        <div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="renameModalLabel">Rename Project</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="new-project-name" class="col-form-label">Type in new project name in the
+                                field below:</label>
+                            <input type="text" class="form-control" id="new-project-name">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="confirm-rename-btn">
+                            Rename
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
         <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
@@ -114,6 +158,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-outline-primary">Create Project</button>
                     </div>
                 </div>
@@ -158,7 +203,43 @@
 
             })
 
+        let projectIdToRename = null;
 
+        const renameModal = document.getElementById('renameModal');
+
+        renameModal.addEventListener('show.bs.modal', (event) => {
+            console.log('Rename modal opened');
+            const button = event.relatedTarget;
+            projectIdToRename = button.getAttribute('data-project-id');
+            const projectName = button.getAttribute('data-project-name');
+            document.getElementById("new-project-name").value = projectName;
+        });
+
+        document.getElementById("confirm-rename-btn").addEventListener("click", () => {
+            const newName = document.getElementById("new-project-name").value;
+
+            if (!projectIdToRename || !newName) {
+                alert("Please enter a new project name.");
+                return;
+            }
+
+            fetch("/rename-project", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    projectId: projectIdToRename,
+                    newName: newName
+                })
+            }).then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        });
         let projectIdToDelete = null;
 
         const deleteModal = document.getElementById('deleteModal');

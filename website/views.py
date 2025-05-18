@@ -338,6 +338,32 @@ def download():
     return send_file(save_path, as_attachment=True)
 
 
+@views.route('/rename-project', methods=['POST'])
+def rename_project():
+    data = request.get_json()
+    project = json.loads(request.data)
+    projectId = project['projectId']
+    project = Project.query.get(projectId)
+    new_name = data.get('newName')
+
+    if not new_name:
+        return jsonify({'success': False, 'message': 'New name is required.'}), 400
+
+    if not project:
+        return jsonify({'success': False, 'message': 'Project not found.'}), 404
+
+    if project.user_id != current_user.id:
+        return jsonify({'success': False, 'message': 'Unauthorized.'}), 403
+
+    existing_project = Project.query.filter_by(project_name=new_name).first()
+    if existing_project:
+        return jsonify({'success': False, 'message': 'Project name already exists.'}), 409
+
+    project.project_name = new_name
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Project renamed successfully.'})
+
 @views.route('/delete-project', methods=['POST'])
 def delete_project():
     project = json.loads(request.data)
