@@ -16,10 +16,9 @@ class GeneratePredictionCNN(BaseClassifier):
 
     def __init__(self, class_names):
         super().__init__(class_names)
-        self.numComponents = 30
+        self.numComponents = 50
         self.patch_size = 7
-        self.test_size = 0.25
-        # self.class_names = [cls for cls in class_names if cls != 'background']
+        self.test_size = 0.3
 
     @staticmethod
     def applyPCA(X, numComponents=75):
@@ -33,6 +32,24 @@ class GeneratePredictionCNN(BaseClassifier):
         newX = np.reshape(newX, (X.shape[0], X.shape[1], numComponents))
 
         return newX, pca
+
+    @staticmethod
+    def oversampleWeakClasses(X, y):
+        uniqueLabels, labelCounts = np.unique(y, return_counts=True)
+        maxCount = np.max(labelCounts)
+        labelInverseRatios = maxCount / labelCounts
+        newX = X[y == uniqueLabels[0], :].repeat(round(labelInverseRatios[0]), axis=0)
+        newY = y[y == uniqueLabels[0]].repeat(round(labelInverseRatios[0]), axis=0)
+        for label, labelInverseRatio in zip(uniqueLabels[1:], labelInverseRatios[1:]):
+            cX = X[y == label, :].repeat(round(labelInverseRatio), axis=0)
+            cY = y[y == label].repeat(round(labelInverseRatio), axis=0)
+            newX = np.concatenate((newX, cX))
+            newY = np.concatenate((newY, cY))
+        np.random.seed(seed=42)
+        rand_perm = np.random.permutation(newY.shape[0])
+        newX = newX[rand_perm, :]
+        newY = newY[rand_perm]
+        return newX, newY
 
     @staticmethod
     def padWithZeros(X, margin=2):
@@ -106,7 +123,7 @@ class GeneratePredictionCNN(BaseClassifier):
 
         model.summary()
 
-        model.fit(X_train, y_train, batch_size=64, epochs=10, verbose=1)
+        model.fit(X_train, y_train, batch_size=32, epochs=10, verbose=1)
 
         return model
 
@@ -143,8 +160,9 @@ class GeneratePredictionCNN(BaseClassifier):
 
         X, pca = self.applyPCA(self.data, numComponents=self.numComponents)
         XPatches, yPatches = self.createPatches(X)
-        X_train, X_test, y_train, y_test = train_test_split(XPatches, yPatches, test_size=0.25,
+        X_train, X_test, y_train, y_test = train_test_split(XPatches, yPatches, test_size=self.test_size,
                                                             random_state=345, stratify=yPatches)
+        X_train, y_train = self.oversampleWeakClasses(X_train, y_train)
         X_train = self.AugmentData(X_train)
         X_train = X_train.reshape(X_train.shape[0], -1)
 
