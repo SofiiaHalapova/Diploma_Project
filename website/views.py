@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 
 from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
 from .ml_model.logistic_regression_classes_prediction import GeneratePredictionLogisticRegression
-# from .ml_model.neural_network_classes_prediction import GeneratePredictionCNN
+from .ml_model.neural_network_classes_prediction import GeneratePredictionCNN
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
 from .ml_model.svm_classes_prediction import GeneratePredictionSVM
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
@@ -298,7 +298,7 @@ def classes_prediction_plot():
         gp = GeneratePredictionSVM(class_names=class_names_dict)
         print("data is loading svm")
     else:
-        # gp = GeneratePredictionCNN(class_names=class_names_dict)
+        gp = GeneratePredictionCNN(class_names=class_names_dict)
         print("data is loading cnn")
 
     gp.load_data(project.dataset)

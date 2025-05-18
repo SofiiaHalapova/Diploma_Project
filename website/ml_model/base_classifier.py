@@ -110,7 +110,8 @@ class BaseClassifier:
         plt.axis('off')
 
         plt.tight_layout()
-        plt.show()
+
+        return None
 
     def flattent_data(self, mask, clf, rows, cols, y_test, X_test, method):
         y_pred_test = clf.predict(X_test)
@@ -121,6 +122,7 @@ class BaseClassifier:
 
         X_full = self.data.astype(np.float32) / 65535.0
         X_full = X_full.reshape((-1, X_full.shape[-1]))
+
         X_full_masked = X_full[mask]
 
         if self.scaler:
