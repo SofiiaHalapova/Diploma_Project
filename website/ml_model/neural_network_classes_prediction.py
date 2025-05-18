@@ -3,7 +3,7 @@ import random
 import numpy as np
 from keras import Sequential
 from keras.src.layers import Dense, Flatten, Conv2D, MaxPooling2D
-from keras.src.optimizers import SGD, Adam
+from keras.src.optimizers import Adam
 from keras.src.utils import to_categorical
 from scipy.ndimage import interpolation
 from sklearn.decomposition import PCA

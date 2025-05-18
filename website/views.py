@@ -281,32 +281,39 @@ def classes_prediction_plot():
 
     class_names_dict = generate_classes_dictionary(project.classification_classes)
     gp = None
+    method = project.classification_method
 
     if project.classification_method == "random-forest-classifier":
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
-        print("data is loading Random Forest")
+        method = "Random Forest Classifier"
+        # print("data is loading Random Forest")
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
-        print("data is loading xg-boost")
+        method = "XGBoost Classifier"
+        # print("data is loading xg-boost")
     elif project.classification_method == "k-nearest":
         gp = GeneratePredictionKNearest(class_names=class_names_dict)
-        print("data is loading k-nearest")
+        method = "K-Nearest Neighbors"
+        # print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
         gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
-        print("data is loading logistic-regression")
+        method = "Logistic Regression"
+        # print("data is loading logistic-regression")
     elif project.classification_method == "svm":
         gp = GeneratePredictionSVM(class_names=class_names_dict)
-        print("data is loading svm")
+        method = "SVM Classifier"
+        # print("data is loading svm")
     else:
         gp = GeneratePredictionCNN(class_names=class_names_dict)
-        print("data is loading cnn")
+        method = "Convolutional Neural Network"
+        # print("data is loading cnn")
 
     gp.load_data(project.dataset)
     image_path = gp.compute_classification_results()
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user,
-                           project=project, classification_method=project.classification_method)
+                           project=project, classification_method=method)
 
 
 @views.route('/download', methods=['GET', 'POST'])

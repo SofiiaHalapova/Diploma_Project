@@ -1,12 +1,28 @@
 {% extends "base.html" %} {% block title %}Project{% endblock %} {% block content %}
     <form method="POST">
-        <h1>Sample Spectra {{ classification_method }}</h1>
-                <img src="{{ image_path }}" style="max-width: 90%; height: auto; margin: 20px auto; display: block;"
-                     alt="Class Distribution">
+        <div style="text-align: center;">
+            <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        font-weight: 700;
+                        font-size: 3rem;
+                        color: #2c3e50;
+                        position: relative;
+                        display: inline-block;
+                        margin-top: 1rem;
+                        padding-bottom: 0.3rem;
+                        margin-bottom: 1.5rem;
+                    ">
+                Sample Spectra Plot
+            </h1>
+        </div>
+        <br>
+        <img src="{{ image_path }}"
+             alt="Sample Spectra"
+             class="img-fluid rounded shadow-sm mb-4"
+             style="max-width: 90%; height: auto;">
         <br>
         <div class="d-flex justify-content-between mb-5">
             <a class="btn btn-light" href="{{ url_for('views.project_details', project_id=project.id) }}">
-                Back
+                ← Back
             </a>
             <a class="btn btn-primary"
                href="{{ url_for('views.download',filename=image_path.replace('/static/', '')) }}">
