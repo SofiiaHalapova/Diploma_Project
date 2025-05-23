@@ -320,10 +320,10 @@ def classes_prediction_plot():
         gp = GeneratePredictionCNN(class_names=class_names_dict, epochs=epochs)
         method = "Convolutional Neural Network"
 
+    print(f"loading {method}")
     gp.load_data(project.dataset)
     image_path, y_pred_img = gp.compute_classification_results()
-    cm_path = gp.get_confusion_matrix(y_pred_img, method)
-    print(f"loading {method}")
+    cm_path = gp.get_confusion_matrix(y_pred_img, method.replace(" ", "_"))
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user, epochs_num=epochs,
@@ -332,11 +332,13 @@ def classes_prediction_plot():
 
 @views.route('/download', methods=['GET', 'POST'])
 def download():
+
     project, redirect_response = get_current_project_or_redirect()
     if redirect_response:
         return redirect_response
 
     filename = request.args.get("filename")
+    print(filename)
 
     if not filename:
         flash("Filename not provided", "error")
