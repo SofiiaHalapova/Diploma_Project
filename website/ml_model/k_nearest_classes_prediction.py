@@ -22,8 +22,8 @@ class GeneratePredictionKNearest(BaseClassifier):
 
         knn.fit(X_train, y_train)
 
-        present_labels = np.unique(y_test)
-        target_names = [self.class_names[k] for k in present_labels]
-        print(classification_report(y_test, knn.predict(X_test), target_names=target_names))
+        self.set_y_test(y_test)
+
+        self.set_clf(knn.predict(X_test))
 
         return self.flattent_data(mask, knn, rows, cols, 'knn')

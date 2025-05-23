@@ -20,4 +20,8 @@ class GeneratePredictionSVM(BaseClassifier):
         clf = svm.SVC(kernel='rbf', C=1000, gamma=1)
         clf.fit(X_train, y_train)
 
+        self.set_y_test(y_test)
+
+        self.set_clf(clf.predict(X_test))
+
         return self.flattent_data(mask, clf, rows, cols, "svm")

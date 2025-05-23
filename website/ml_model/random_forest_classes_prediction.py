@@ -21,8 +21,8 @@ class GeneratePredictionRandomForest(BaseClassifier):
         clf = RandomForestClassifier(n_estimators=100, random_state=42)
         clf.fit(X_train, y_train)
 
-        present_labels = np.unique(y_test)
-        target_names = [self.class_names[k] for k in present_labels]
-        print(classification_report(y_test, clf.predict(X_test), target_names=target_names))
+        self.set_y_test(y_test)
+
+        self.set_clf(clf.predict(X_test))
 
         return self.flattent_data(mask, clf, rows, cols, 'random_forest')

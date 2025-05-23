@@ -2,14 +2,14 @@ import os
 import random
 import string
 
-import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
+from flask import jsonify
 from matplotlib.colors import ListedColormap
 from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -27,7 +27,21 @@ class BaseClassifier:
         self.wavelength = None
         self.scaler = None
         self.pca = None
+        self.y_test = None
+        self.clf = None
         self.class_colors = sns.color_palette(None, len(class_names))
+
+    def set_y_test(self, y_test):
+        self.y_test = y_test
+
+    def get_y_test(self):
+        return self.y_test
+
+    def set_clf(self, clf):
+        self.clf = clf
+
+    def get_clf(self):
+        return self.clf
 
     def load_data(self, path):
         ld = LoadDataset(self.class_names)
@@ -172,12 +186,6 @@ class BaseClassifier:
         self.plot_confusion_matrix(y_true_flat, y_pred_flat)
 
         return self.save_prediction_to_file(method, metric_type="confusion_matrix")
-
-    def print_prediction_distribution(self, y_pred):
-        counts = pd.Series(y_pred).value_counts().sort_index()
-        print("Predicted pixel distribution per class:")
-        for i, count in enumerate(counts):
-            print(f"{self.class_names[i]:30} - {count} pixels")
 
     def compute_classification_results(self):
         raise NotImplementedError("Must be implemented by subclasses")

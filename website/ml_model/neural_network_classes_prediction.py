@@ -191,6 +191,8 @@ class GeneratePredictionCNN(BaseClassifier):
         y_pred_proba = model.predict(X_test)  # ймовірності
         y_pred = np.argmax(y_pred_proba, axis=1)  # індекси найбільших значень → класи
 
-        print(classification_report(y_test, y_pred, target_names=target_names))
+        self.set_y_test(y_test)
+
+        self.set_clf(y_pred)
 
         return self.save_prediction_to_file("cnn"), y_pred_img

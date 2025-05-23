@@ -4,9 +4,11 @@ import re
 import shutil
 import string
 
+import numpy as np
 from flask import Blueprint, render_template, url_for, redirect, send_file
 from flask import request, flash, session, json, jsonify
 from flask_login import login_required, current_user
+from sklearn.metrics import classification_report
 from werkzeug.utils import secure_filename
 
 from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
@@ -321,13 +323,30 @@ def classes_prediction_plot():
         method = "Convolutional Neural Network"
 
     print(f"loading {method}")
+
     gp.load_data(project.dataset)
     image_path, y_pred_img = gp.compute_classification_results()
     cm_path = gp.get_confusion_matrix(y_pred_img, method.replace(" ", "_"))
 
+    y_test = gp.get_y_test()
+    pred = gp.get_clf()
+
+    present_labels = np.unique(y_test)
+    target_names = [gp.class_names[k] for k in present_labels]
+
+    report_text = classification_report(y_test, pred, target_names=target_names)
+    report_html = f"<pre>{report_text}</pre>"
+
+    print(cm_path)
+
     return render_template("class_prediction_plot.html",
-                           image_path=url_for('static', filename=image_path), user=current_user, epochs_num=epochs,
-                           project=project, classification_method=method, cm_path=url_for('static', filename=cm_path))
+                           user=current_user,
+                           epochs_num=epochs,
+                           project=project,
+                           report_html=report_html,
+                           classification_method=method,
+                           image_path=url_for('static', filename=image_path),
+                           cm_path=url_for('static', filename=cm_path))
 
 
 @views.route('/download', methods=['GET', 'POST'])
