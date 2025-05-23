@@ -140,7 +140,7 @@ class GeneratePredictionCNN(BaseClassifier):
         height = self.labels.shape[0]
         width = self.labels.shape[1]
 
-        print(height, width)
+        # print(height, width)
 
         patches = []
         positions = []
@@ -165,7 +165,7 @@ class GeneratePredictionCNN(BaseClassifier):
         return np.array(outputs.astype(int))
 
     def compute_classification_results(self):
-        print(self.epochs)
+        # print(self.epochs)
 
         X, pca = self.apply_pca(self.data, numComponents=self.numComponents)
         XPatches, yPatches = self.create_patches(X)

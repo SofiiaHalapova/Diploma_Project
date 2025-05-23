@@ -13,7 +13,6 @@ from .ml_model.k_nearest_classes_prediction import GeneratePredictionKNearest
 from .ml_model.logistic_regression_classes_prediction import GeneratePredictionLogisticRegression
 from .ml_model.neural_network_classes_prediction import GeneratePredictionCNN
 from .ml_model.random_forest_classes_prediction import GeneratePredictionRandomForest
-from .ml_model.svm_classes_prediction import GeneratePredictionSVM
 from .ml_model.xg_boost_classes_prediction import GeneratePredictionXGBoost
 from .ml_model.data_evaluation import DataEvaluation
 from .models import Project, db
@@ -54,7 +53,7 @@ def load_dataset_file(upload_method, dataset_file, dataset_link, error, project_
     elif upload_method == "archive" and dataset_file and allowed_file(dataset_file.filename, ALLOWED_EXTENSIONS):
         filename = secure_filename(dataset_file.filename)
         file_path = os.path.join(UPLOAD_DATASETS_FOLDER, filename)
-        print("views archive file path", file_path)
+        # print("views archive file path", file_path)
         dataset_file.save(file_path)
         dataset = unarchive_dataset(file_path, project_name)
     else:
@@ -273,14 +272,14 @@ def comprehensive_review_plot():
 @views.route('/create_classes_prediction_plot', methods=['GET', 'POST'])
 @login_required
 def create_classes_prediction_plot():
-    print("create_classes_prediction_plot is called")
+    # print("create_classes_prediction_plot is called")
     return render_template("loading.html", user=current_user)
 
 
 @views.route('/classes_prediction_plot', methods=['GET', 'POST'])
 @login_required
 def classes_prediction_plot():
-    print("classes_prediction_plot is called")
+    # print("classes_prediction_plot is called")
     project, redirect_response = get_current_project_or_redirect()
     if redirect_response:
         return redirect_response
@@ -291,7 +290,7 @@ def classes_prediction_plot():
     epochs = project.epochs_num
 
     if request.method == 'POST' and method == "neural-network":
-        print("post")
+        # print("post")
         try:
             submitted_epochs = int(request.form.get('cnn_epochs'))
             if 1 <= submitted_epochs <= 100:
@@ -307,40 +306,24 @@ def classes_prediction_plot():
     if project.classification_method == "random-forest-classifier":
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
         method = "Random Forest Classifier"
-        print("data is loading Random Forest")
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
         method = "XGBoost Classifier"
-        print("data is loading xg-boost")
     elif project.classification_method == "k-nearest":
         gp = GeneratePredictionKNearest(class_names=class_names_dict)
         method = "K-Nearest Neighbors"
-        print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
         gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
         method = "Logistic Regression"
-        # print("data is loading logistic-regression")
-    # elif project.classification_method == "svm":
-    #     gp = GeneratePredictionSVM(class_names=class_names_dict)
-    #     method = "SVM Classifier"
-        # print("data is loading svm")
     else:
-
-        print(epochs)
+        print("Number of epochs: ", epochs)
         gp = GeneratePredictionCNN(class_names=class_names_dict, epochs=epochs)
         method = "Convolutional Neural Network"
-        # gp.load_data(project.dataset)
-        # image_path, y_pred_img = gp.compute_classification_results()
-        print("data loading CNN")
-
-        # return render_template("class_prediction_plot.html",
-        #                        image_path=url_for('static', filename=image_path), user=current_user,
-        #                        project=project, classification_method="Convolutional Neural Network", epochs_num=epochs,
-        #                        cm_path=url_for('static', filename=gp.get_confusion_matrix(y_pred_img, method)))
 
     gp.load_data(project.dataset)
     image_path, y_pred_img = gp.compute_classification_results()
     cm_path = gp.get_confusion_matrix(y_pred_img, method)
+    print(f"loading {method}")
 
     return render_template("class_prediction_plot.html",
                            image_path=url_for('static', filename=image_path), user=current_user, epochs_num=epochs,
