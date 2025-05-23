@@ -51,14 +51,14 @@ class DataEvaluation:
         plt.figure(figsize=(15, 5))
 
         bars = plt.bar(
-            [self.class_names.get(i, f'Невідомий матеріал ({i})') for i in unique],
+            [self.class_names.get(i, f'Unknown material ({i})') for i in unique],
             counts
         )
 
         plt.xticks(rotation=45, ha='right')
-        plt.title('Розподіл класів у зображенні')
-        plt.xlabel('Клас')
-        plt.ylabel('Кількість пікселів')
+        plt.title('Class Distribution')
+        plt.xlabel('Class')
+        plt.ylabel('Pixels number')
 
         for bar in bars:
             plt.text(bar.get_x() + bar.get_width() / 2.,
@@ -90,9 +90,11 @@ class DataEvaluation:
                 mean_spectrum = np.mean(self.data[mask], axis=0)
                 plt.plot(self.wavelength, mean_spectrum, label=self.class_names[class_id])
 
-        plt.title('Середні спектри обраних класів')
-        plt.xlabel('Довжина хвилі спектру (nm)')
-        plt.ylabel('Відбивна здатність матеріалу')
+        # Середні спектри обраних класів
+        plt.title('Selected Classes Average Spectrum')
+        plt.xlabel('Spectra Wavelength (nm)')
+        # Відбивна здатність матеріалу
+        plt.ylabel('Object Reflectivity')
         plt.legend()
         plt.grid(True)
 
@@ -105,22 +107,22 @@ class DataEvaluation:
 
         false_color = self.create_false_color()
         axes[0, 0].imshow(false_color)
-        axes[0, 0].set_title('Кольорове зображення')
+        axes[0, 0].set_title('Colored picture')
 
         # Ground truth
         im = axes[0, 1].imshow(self.labels)
-        axes[0, 1].set_title('Фактичні дані грунту')
+        axes[0, 1].set_title('Ground Truth')
         plt.colorbar(im, ax=axes[0, 1])
 
         # Single band visualization
         mid_band = self.data.shape[2] // 2
         im = axes[1, 0].imshow(self.data[:, :, mid_band])
-        axes[1, 0].set_title(f'Окремий спектральний канал ({int(self.wavelength[mid_band])}nm)')
+        axes[1, 0].set_title(f'Separate spectral channel ({int(self.wavelength[mid_band])}nm)')
         plt.colorbar(im, ax=axes[1, 0])
 
         spectral_variance = np.std(self.data, axis=2)
         im = axes[1, 1].imshow(spectral_variance)
-        axes[1, 1].set_title('Спектральна дисперсія')
+        axes[1, 1].set_title('Spectral dispersion')
         plt.colorbar(im, ax=axes[1, 1])
 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
