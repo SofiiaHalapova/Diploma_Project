@@ -184,6 +184,11 @@ def new_project():
         dataset_link = form.get('dataset_link')
         dataset_file = request.files.get('dataset_archive')
 
+        epochs = 10
+
+        if classification_method == "neural-network":
+            epochs = form.get('cnn_epochs')
+
         error = validate_upload_input(project_name, classification_classes,
                                       classification_method, dataset_file, dataset_link)
 
@@ -196,7 +201,8 @@ def new_project():
                 classification_method=classification_method,
                 classification_classes=classification_classes,
                 dataset=dataset,
-                user_id=current_user.id
+                user_id=current_user.id,
+                epochs_num=epochs
             )
 
             db.session.add(project)
@@ -271,7 +277,7 @@ def create_classes_prediction_plot():
     return render_template("loading.html", user=current_user)
 
 
-@views.route('/classes_prediction_plot', methods=['GET'])
+@views.route('/classes_prediction_plot', methods=['GET', 'POST'])
 @login_required
 def classes_prediction_plot():
     print("classes_prediction_plot is called")
@@ -282,38 +288,62 @@ def classes_prediction_plot():
     class_names_dict = generate_classes_dictionary(project.classification_classes)
     gp = None
     method = project.classification_method
+    epochs = project.epochs_num
+
+    if request.method == 'POST' and method == "neural-network":
+        print("post")
+        try:
+            submitted_epochs = int(request.form.get('cnn_epochs'))
+            if 1 <= submitted_epochs <= 100:
+                epochs = submitted_epochs
+                project.epochs_num = epochs
+                db.session.commit()
+                flash(f"Epochs updated to {epochs}", category="success")
+            else:
+                flash("Epoch number must be between 1 and 100.", category="error")
+        except ValueError:
+            flash("Invalid epoch input.", category="error")
 
     if project.classification_method == "random-forest-classifier":
         gp = GeneratePredictionRandomForest(class_names=class_names_dict)
         method = "Random Forest Classifier"
-        # print("data is loading Random Forest")
+        print("data is loading Random Forest")
     elif project.classification_method == "xg-boost":
         gp = GeneratePredictionXGBoost(class_names=class_names_dict)
         method = "XGBoost Classifier"
-        # print("data is loading xg-boost")
+        print("data is loading xg-boost")
     elif project.classification_method == "k-nearest":
         gp = GeneratePredictionKNearest(class_names=class_names_dict)
         method = "K-Nearest Neighbors"
-        # print("data is loading k-nearest")
+        print("data is loading k-nearest")
     elif project.classification_method == "logistic-regression":
         gp = GeneratePredictionLogisticRegression(class_names=class_names_dict)
         method = "Logistic Regression"
         # print("data is loading logistic-regression")
-    elif project.classification_method == "svm":
-        gp = GeneratePredictionSVM(class_names=class_names_dict)
-        method = "SVM Classifier"
+    # elif project.classification_method == "svm":
+    #     gp = GeneratePredictionSVM(class_names=class_names_dict)
+    #     method = "SVM Classifier"
         # print("data is loading svm")
     else:
-        gp = GeneratePredictionCNN(class_names=class_names_dict)
+
+        print(epochs)
+        gp = GeneratePredictionCNN(class_names=class_names_dict, epochs=epochs)
         method = "Convolutional Neural Network"
-        # print("data is loading cnn")
+        # gp.load_data(project.dataset)
+        # image_path, y_pred_img = gp.compute_classification_results()
+        print("data loading CNN")
+
+        # return render_template("class_prediction_plot.html",
+        #                        image_path=url_for('static', filename=image_path), user=current_user,
+        #                        project=project, classification_method="Convolutional Neural Network", epochs_num=epochs,
+        #                        cm_path=url_for('static', filename=gp.get_confusion_matrix(y_pred_img, method)))
 
     gp.load_data(project.dataset)
     image_path, y_pred_img = gp.compute_classification_results()
     cm_path = gp.get_confusion_matrix(y_pred_img, method)
 
     return render_template("class_prediction_plot.html",
-                           image_path=url_for('static', filename=image_path), user=current_user,
+                           image_path=url_for('static', filename=image_path), user=current_user, epochs_num=epochs,
                            project=project, classification_method=method, cm_path=url_for('static', filename=cm_path))
 
 
@@ -363,6 +393,7 @@ def rename_project():
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Project renamed successfully.'})
+
 
 @views.route('/delete-project', methods=['POST'])
 def delete_project():

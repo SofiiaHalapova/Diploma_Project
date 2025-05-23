@@ -1,4 +1,6 @@
+import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
 
 from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 
@@ -19,4 +21,9 @@ class GeneratePredictionLogisticRegression(BaseClassifier):
         clf = LogisticRegression(max_iter=1000, random_state=42)
         clf.fit(X_train, y_train)
 
-        return self.flattent_data(mask, clf, rows, cols, y_test, X_test, 'logistic-regression')
+        present_labels = np.unique(y_test)
+        target_names = [self.class_names[k] for k in present_labels]
+
+        print(classification_report(y_test, clf.predict(X_test), target_names=target_names))
+
+        return self.flattent_data(mask, clf, rows, cols, 'logistic-regression')

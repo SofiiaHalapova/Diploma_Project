@@ -1,3 +1,5 @@
+import numpy as np
+from sklearn.metrics import classification_report
 from sklearn.neighbors import KNeighborsClassifier
 
 from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
@@ -20,4 +22,8 @@ class GeneratePredictionKNearest(BaseClassifier):
 
         knn.fit(X_train, y_train)
 
-        return self.flattent_data(mask, knn, rows, cols, y_test, X_test, 'knn')
+        present_labels = np.unique(y_test)
+        target_names = [self.class_names[k] for k in present_labels]
+        print(classification_report(y_test, knn.predict(X_test), target_names=target_names))
+
+        return self.flattent_data(mask, knn, rows, cols, 'knn')

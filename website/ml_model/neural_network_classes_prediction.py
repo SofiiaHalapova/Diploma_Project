@@ -7,6 +7,7 @@ from keras.src.optimizers import Adam
 from keras.src.utils import to_categorical
 from scipy.ndimage import interpolation
 from sklearn.decomposition import PCA
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
 from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
@@ -14,16 +15,18 @@ from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 
 class GeneratePredictionCNN(BaseClassifier):
 
-    def __init__(self, class_names):
+    def __init__(self, class_names, epochs):
         super().__init__(class_names)
         self.numComponents = 50
         self.patch_size = 7
         self.test_size = 0.3
+        self.epochs = epochs
+
 
     @staticmethod
-    def applyPCA(X, numComponents=75):
+    def apply_pca(X, numComponents=75):
         # reducing dimensionality
-        # newX.shape = (H * W, B)
+        # newX.shape (H * W, B)
         newX = X.reshape((-1, X.shape[-1]))
         pca = PCA(n_components=numComponents, whiten=True)
         newX = pca.fit_transform(newX)
@@ -33,38 +36,43 @@ class GeneratePredictionCNN(BaseClassifier):
 
         return newX, pca
 
-    @staticmethod
-    def oversampleWeakClasses(X, y):
-        uniqueLabels, labelCounts = np.unique(y, return_counts=True)
-        maxCount = np.max(labelCounts)
-        labelInverseRatios = maxCount / labelCounts
-        newX = X[y == uniqueLabels[0], :].repeat(round(labelInverseRatios[0]), axis=0)
-        newY = y[y == uniqueLabels[0]].repeat(round(labelInverseRatios[0]), axis=0)
-        for label, labelInverseRatio in zip(uniqueLabels[1:], labelInverseRatios[1:]):
-            cX = X[y == label, :].repeat(round(labelInverseRatio), axis=0)
-            cY = y[y == label].repeat(round(labelInverseRatio), axis=0)
-            newX = np.concatenate((newX, cX))
-            newY = np.concatenate((newY, cY))
-        np.random.seed(seed=42)
-        rand_perm = np.random.permutation(newY.shape[0])
-        newX = newX[rand_perm, :]
-        newY = newY[rand_perm]
-        return newX, newY
+    # @staticmethod
+    # def oversample_weak_classes(X, y):
+    #     uniqueLabels, labelCounts = np.unique(y, return_counts=True)
+    #     maxCount = np.max(labelCounts)
+    #     labelInverseRatios = maxCount / labelCounts
+    #
+    #     newX = X[y == uniqueLabels[0], :].repeat(round(float(labelInverseRatios[0])), axis=0)
+    #     newY = y[y == uniqueLabels[0]].repeat(round(float(labelInverseRatios[0])), axis=0)
+    #
+    #     for label, labelInverseRatio in zip(uniqueLabels[1:], labelInverseRatios[1:]):
+    #         cX = X[y == label, :].repeat(round(labelInverseRatio), axis=0)
+    #         cY = y[y == label].repeat(round(labelInverseRatio), axis=0)
+    #         newX = np.concatenate((newX, cX))
+    #         newY = np.concatenate((newY, cY))
+    #
+    #     np.random.seed(seed=42)
+    #     rand_perm = np.random.permutation(newY.shape[0])
+    #
+    #     newX = newX[rand_perm, :]
+    #     newY = newY[rand_perm]
+    #
+    #     return newX, newY
 
     @staticmethod
-    def padWithZeros(X, margin=2):
+    def pad_with_zeros(X, margin=2):
         newX = np.zeros((X.shape[0] + 2 * margin, X.shape[1] + 2 * margin, X.shape[2]))
         x_offset = margin
         y_offset = margin
         newX[x_offset:X.shape[0] + x_offset, y_offset:X.shape[1] + y_offset, :] = X
         return newX
 
-    def createPatches(self, X, removeZeroLabels=True):
+    def create_patches(self, X, removeZeroLabels=True):
         y = self.labels
 
         margin = int((self.patch_size - 1) / 2)
 
-        zeroPaddedX = self.padWithZeros(X, margin=margin)
+        zeroPaddedX = self.pad_with_zeros(X, margin=margin)
 
         patchesX = np.zeros((X.shape[0] * X.shape[1], self.patch_size, self.patch_size, X.shape[2]))
         patchesY = np.zeros((X.shape[0] * X.shape[1]))
@@ -85,7 +93,7 @@ class GeneratePredictionCNN(BaseClassifier):
         return patchesX, patchesY
 
     @staticmethod
-    def AugmentData(X_train):
+    def augment_data(X_train):
         flipped_patch = None
         for i in range(int(X_train.shape[0] / 2)):
             patch = X_train[i, :, :, :]
@@ -102,7 +110,7 @@ class GeneratePredictionCNN(BaseClassifier):
             X_train[i, :, :, :] = patch2
         return X_train
 
-    def Patch(self, data, height_index, width_index):
+    def patch(self, data, height_index, width_index):
         height_slice = slice(height_index, height_index + self.patch_size)
         width_slice = slice(width_index, width_index + self.patch_size)
         patch = data[height_slice, width_slice, :]
@@ -123,7 +131,7 @@ class GeneratePredictionCNN(BaseClassifier):
 
         model.summary()
 
-        model.fit(X_train, y_train, batch_size=32, epochs=10, verbose=1)
+        model.fit(X_train, y_train, batch_size=32, epochs=self.epochs, verbose=1)
 
         return model
 
@@ -144,7 +152,7 @@ class GeneratePredictionCNN(BaseClassifier):
                 target = int(self.labels[i, j])
                 if target == 0:
                     continue
-                image_patch = self.Patch(X, i - margin, j - margin)
+                image_patch = self.patch(X, i - margin, j - margin)
                 patches.append(
                     image_patch.reshape(1, self.patch_size, self.patch_size, self.numComponents).astype('float32'))
                 positions.append((i, j))
@@ -157,13 +165,14 @@ class GeneratePredictionCNN(BaseClassifier):
         return np.array(outputs.astype(int))
 
     def compute_classification_results(self):
+        print(self.epochs)
 
-        X, pca = self.applyPCA(self.data, numComponents=self.numComponents)
-        XPatches, yPatches = self.createPatches(X)
+        X, pca = self.apply_pca(self.data, numComponents=self.numComponents)
+        XPatches, yPatches = self.create_patches(X)
         X_train, X_test, y_train, y_test = train_test_split(XPatches, yPatches, test_size=self.test_size,
                                                             random_state=345, stratify=yPatches)
-        X_train, y_train = self.oversampleWeakClasses(X_train, y_train)
-        X_train = self.AugmentData(X_train)
+        # X_train, y_train = self.oversample_weak_classes(X_train, y_train)
+        X_train = self.augment_data(X_train)
         X_train = X_train.reshape(X_train.shape[0], -1)
 
         y_train = to_categorical(y_train)
@@ -176,6 +185,12 @@ class GeneratePredictionCNN(BaseClassifier):
 
         self.plot_predictions_truth(y_pred_img, self.labels)
 
+        present_labels = np.unique(y_test)
+        target_names = [self.class_names[k] for k in present_labels]
+
+        y_pred_proba = model.predict(X_test)  # ймовірності
+        y_pred = np.argmax(y_pred_proba, axis=1)  # індекси найбільших значень → класи
+
+        print(classification_report(y_test, y_pred, target_names=target_names))
+
         return self.save_prediction_to_file("cnn"), y_pred_img
-
-

@@ -110,7 +110,7 @@ class BaseClassifier:
 
         return None
 
-    def flattent_data(self, mask, clf, rows, cols, y_test, X_test, method):
+    def flattent_data(self, mask, clf, rows, cols, method):
 
         X_full = self.data.astype(np.float32) / 65535.0
         X_full = X_full.reshape((-1, X_full.shape[-1]))
@@ -141,9 +141,9 @@ class BaseClassifier:
         cm = confusion_matrix(y_true, y_pred, labels=labels)
 
         try:
-            display_labels = [self.class_names[int(l)] for l in labels]
+            display_labels = [self.class_names[int(label)] for label in labels]
         except (KeyError, IndexError):
-            display_labels = [str(l) for l in labels]
+            display_labels = [str(label) for label in labels]
 
         fig, ax = plt.subplots(figsize=(12, 12))
         disp = ConfusionMatrixDisplay(confusion_matrix=cm,
@@ -160,7 +160,7 @@ class BaseClassifier:
         y_pred_flat = y_pred_flat[mask] - 1
         y_true_flat = y_true_flat[mask] - 1
 
-        fig = self.plot_confusion_matrix(y_true_flat, y_pred_flat)
+        self.plot_confusion_matrix(y_true_flat, y_pred_flat)
 
         return self.save_prediction_to_file(method, metric_type="confusion_matrix")
 

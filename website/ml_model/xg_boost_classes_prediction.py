@@ -1,3 +1,5 @@
+import numpy as np
+from sklearn.metrics import classification_report
 from xgboost import XGBClassifier
 from Ground_Detection_App.website.ml_model.base_classifier import BaseClassifier
 
@@ -18,4 +20,9 @@ class GeneratePredictionXGBoost(BaseClassifier):
         clf = XGBClassifier(n_estimators=100, max_depth=5)
         clf.fit(X_train, y_train)
 
-        return self.flattent_data(mask, clf, rows, cols, y_test, X_test, "xg-boost")
+        present_labels = np.unique(y_test)
+        target_names = [self.class_names[k] for k in present_labels]
+
+        print(classification_report(y_test, clf.predict(X_test), target_names=target_names))
+
+        return self.flattent_data(mask, clf, rows, cols, "xg-boost")

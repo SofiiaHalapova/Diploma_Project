@@ -13,6 +13,7 @@ class Project(db.Model):
     dataset = db.Column(db.String(255), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    epochs_num = db.Column(db.Integer, nullable=False)
 
 
 class User(db.Model, UserMixin):
