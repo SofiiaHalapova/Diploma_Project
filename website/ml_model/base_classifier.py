@@ -96,10 +96,19 @@ class BaseClassifier:
         plt.title('Predicted Classes')
         plt.axis('off')
 
-        patches = [plt.plot([], [], marker="o", ms=10, ls="", mec=None, color=self.class_colors[i],
-                            label="{:d}: {}".format(i, self.class_names[i]))[0] for i in range(len(self.class_names))]
+        unique, counts = np.unique(y_pred_img, return_counts=True)
+        pixel_counts = dict(zip(unique, counts))
 
-        plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+        patches = []
+        for i in range(len(self.class_names)):
+            class_label = i + 1  # predicted image uses 1-based class indexing
+            count = pixel_counts.get(class_label, 0)
+            label = f"{i}: {self.class_names[i]}, Pixels: {count}"
+            patch = plt.plot([], [], marker="o", ms=10, ls="", mec=None,
+                             color=self.class_colors[i], label=label)[0]
+            patches.append(patch)
+
+        plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=15)
 
         plt.subplot(1, 2, 2)
         plt.imshow(y_img, cmap=cmap)
